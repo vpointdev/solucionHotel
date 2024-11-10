@@ -1,3 +1,7 @@
+USE Hotel;
+GO
+
+-- 1. Primero la función de generar código
 CREATE OR ALTER FUNCTION FN_GenerarCodigoReservacion()
 RETURNS VARCHAR(20)
 AS
@@ -7,13 +11,37 @@ BEGIN
 END
 GO
 
+-- 2. El SP para obtener por código (ya que es dependencia)
+CREATE OR ALTER PROCEDURE PA_Reservacion_ObtenerPorCodigo
+(
+    @CodigoReservacion VARCHAR(20)
+)
+AS
+BEGIN
+    SELECT  r.ReservacionId,
+            r.CodigoReservacion,
+            r.FechaEntrada,
+            r.FechaSalida,
+            r.PrecioTotal,
+            h.NumeroHabitacion,
+            th.Nombre AS TipoHabitacion,
+            r.Estado,
+            u.Nombre AS NombreUsuario
+    FROM Reservacion r
+    INNER JOIN Habitacion h ON r.HabitacionId = h.HabitacionId
+    INNER JOIN TipoHabitacion th ON h.TipoHabitacionId = th.TipoHabitacionId
+    INNER JOIN Usuario u ON r.UsuarioId = u.UsuarioId
+    WHERE r.CodigoReservacion = @CodigoReservacion
+END
+GO
+
+-- 3. Ahora sí el SP de crear
 CREATE OR ALTER PROCEDURE PA_Reservacion_Crear
 (
     @UsuarioId INT,
     @HabitacionId INT,
     @FechaEntrada DATETIME,
-    @FechaSalida DATETIME,
-    @UsuarioCreacionId INT
+    @FechaSalida DATETIME
 )
 AS
 BEGIN
@@ -26,11 +54,7 @@ BEGIN
             SELECT 1
             FROM Reservacion r
             WHERE r.HabitacionId = @HabitacionId
-            AND r.EstadoReservacionId IN (
-                SELECT EstadoReservacionId 
-                FROM EstadoReservacion 
-                WHERE Nombre IN ('Confirmada')
-            )
+            AND r.Estado = 'Confirmada'
             AND (
                 @FechaEntrada BETWEEN r.FechaEntrada AND r.FechaSalida
                 OR @FechaSalida BETWEEN r.FechaEntrada AND r.FechaSalida
@@ -44,10 +68,7 @@ BEGIN
         INNER JOIN TipoHabitacion th ON h.TipoHabitacionId = th.TipoHabitacionId
         WHERE h.HabitacionId = @HabitacionId;
 
-        DECLARE @EstadoConfirmada INT
-        SELECT @EstadoConfirmada = EstadoReservacionId
-        FROM EstadoReservacion
-        WHERE Nombre = 'Confirmada';
+        DECLARE @CodigoReservacion VARCHAR(20) = dbo.FN_GenerarCodigoReservacion();
 
         INSERT INTO Reservacion (
             CodigoReservacion,
@@ -55,22 +76,18 @@ BEGIN
             HabitacionId,
             FechaEntrada,
             FechaSalida,
-            EstadoReservacionId,
-            PrecioTotal,
-            UsuarioCreacionId
+            Estado,
+            PrecioTotal
         )
         VALUES (
-            dbo.FN_GenerarCodigoReservacion(),
+            @CodigoReservacion,
             @UsuarioId,
             @HabitacionId,
             @FechaEntrada,
             @FechaSalida,
-            @EstadoConfirmada,
-            @PrecioTotal,
-            @UsuarioCreacionId
+            'Confirmada',
+            @PrecioTotal
         );
-
-        DECLARE @CodigoReservacion VARCHAR(20) = SCOPE_IDENTITY();
         
         EXEC PA_Reservacion_ObtenerPorCodigo @CodigoReservacion;
     END TRY
@@ -114,15 +131,8 @@ BEGIN
         SET @CargoCancelacion = @PrecioTotal * 0.25 -- 25% fee
     END
 
-    DECLARE @EstadoCancelada INT
-    SELECT @EstadoCancelada = EstadoReservacionId
-    FROM EstadoReservacion
-    WHERE Nombre = 'Cancelada'
-
     UPDATE Reservacion
-    SET EstadoReservacionId = @EstadoCancelada,
-        FechaModificacion = GETDATE(),
-        UsuarioModificacionId = @UsuarioId
+    SET Estado = 'Cancelada'
     WHERE ReservacionId = @ReservacionId
 
     SELECT  ReservacionId,
@@ -151,11 +161,10 @@ BEGIN
             r.PrecioTotal,
             h.NumeroHabitacion,
             th.Nombre AS TipoHabitacion,
-            er.Nombre AS Estado
+            r.Estado
     FROM Reservacion r
     INNER JOIN Habitacion h ON r.HabitacionId = h.HabitacionId
     INNER JOIN TipoHabitacion th ON h.TipoHabitacionId = th.TipoHabitacionId
-    INNER JOIN EstadoReservacion er ON r.EstadoReservacionId = er.EstadoReservacionId
     WHERE r.UsuarioId = @UsuarioId
     ORDER BY r.FechaEntrada DESC
 END
@@ -174,13 +183,80 @@ BEGIN
             r.PrecioTotal,
             h.NumeroHabitacion,
             th.Nombre AS TipoHabitacion,
-            er.Nombre AS Estado,
+            r.Estado,
             u.Nombre AS NombreUsuario
     FROM Reservacion r
     INNER JOIN Habitacion h ON r.HabitacionId = h.HabitacionId
     INNER JOIN TipoHabitacion th ON h.TipoHabitacionId = th.TipoHabitacionId
-    INNER JOIN EstadoReservacion er ON r.EstadoReservacionId = er.EstadoReservacionId
     INNER JOIN Usuario u ON r.UsuarioId = u.UsuarioId
     WHERE r.CodigoReservacion = @CodigoReservacion
+END
+GO
+
+CREATE OR ALTER PROCEDURE PA_Reservacion_ActualizarCheckOut
+AS
+BEGIN
+    UPDATE r
+    SET r.Estado = 'CheckOut'
+    FROM Reservacion r
+    WHERE r.FechaSalida < GETDATE()
+    AND r.Estado = 'Confirmada'
+
+    SELECT 
+        COUNT(*) AS ReservacionesActualizadas,
+        'Reservaciones actualizadas a CheckOut' AS Mensaje
+    FROM Reservacion
+    WHERE Estado = 'CheckOut'
+    AND FechaSalida < GETDATE()
+END
+GO
+
+CREATE OR ALTER PROCEDURE PA_Reporte_ActualizarYObtenerIngresos
+(
+    @FechaInicio DATETIME,
+    @FechaFin DATETIME
+)
+AS
+BEGIN
+    EXEC PA_Reservacion_ActualizarCheckOut
+    SELECT  
+        th.Nombre AS TipoHabitacion,
+        COUNT(r.ReservacionId) AS CantidadReservas,
+        SUM(r.PrecioTotal) AS TotalIngresos,
+        MIN(r.PrecioTotal) AS IngresoMinimo,
+        MAX(r.PrecioTotal) AS IngresoMaximo,
+        AVG(r.PrecioTotal) AS PromedioIngreso
+    FROM TipoHabitacion th
+    LEFT JOIN Habitacion h ON th.TipoHabitacionId = h.TipoHabitacionId
+    LEFT JOIN Reservacion r ON h.HabitacionId = r.HabitacionId
+    AND r.FechaEntrada BETWEEN @FechaInicio AND @FechaFin
+    AND r.Estado = 'CheckOut'
+    GROUP BY th.Nombre
+    ORDER BY th.Nombre
+END
+GO
+
+CREATE OR ALTER PROCEDURE PA_Reporte_OcupacionHabitaciones
+(
+    @FechaInicio DATETIME,
+    @FechaFin DATETIME
+)
+AS
+BEGIN
+    EXEC PA_Reservacion_ActualizarCheckOut
+    SELECT  
+        th.Nombre AS TipoHabitacion,
+        COUNT(DISTINCT h.HabitacionId) AS TotalHabitaciones,
+        COUNT(DISTINCT r.ReservacionId) AS TotalReservas,
+        CAST(COUNT(DISTINCT r.ReservacionId) AS FLOAT) / 
+        CAST(COUNT(DISTINCT h.HabitacionId) * DATEDIFF(DAY, @FechaInicio, @FechaFin) AS FLOAT) * 100 AS PorcentajeOcupacion
+    FROM TipoHabitacion th
+    LEFT JOIN Habitacion h ON th.TipoHabitacionId = h.TipoHabitacionId
+    LEFT JOIN Reservacion r ON h.HabitacionId = r.HabitacionId
+    AND r.FechaEntrada BETWEEN @FechaInicio AND @FechaFin
+    AND r.Estado IN ('Confirmada', 'CheckOut')
+    WHERE h.Activo = 1
+    GROUP BY th.Nombre
+    ORDER BY th.Nombre
 END
 GO

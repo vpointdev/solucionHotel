@@ -1,3 +1,6 @@
+USE Hotel;
+GO
+
 CREATE OR ALTER PROCEDURE PA_Habitacion_ObtenerDisponibles
 (
     @FechaEntrada DATETIME,
@@ -20,17 +23,11 @@ BEGIN
                 DATEDIFF(DAY, @FechaEntrada, @FechaSalida) * th.PrecioBase AS PrecioEstadia
         FROM Habitacion h
         INNER JOIN TipoHabitacion th ON h.TipoHabitacionId = th.TipoHabitacionId
-        WHERE h.Estado = 'Disponible'
-        AND h.Activo = 1
-        AND NOT EXISTS (
+        WHERE NOT EXISTS (
             SELECT 1
             FROM Reservacion r
             WHERE r.HabitacionId = h.HabitacionId
-            AND r.EstadoReservacionId IN (
-                SELECT EstadoReservacionId 
-                FROM EstadoReservacion 
-                WHERE Nombre IN ('Confirmada')
-            )
+            AND r.Estado = 'Confirmada'
             AND (
                 @FechaEntrada BETWEEN r.FechaEntrada AND r.FechaSalida
                 OR @FechaSalida BETWEEN r.FechaEntrada AND r.FechaSalida
@@ -56,26 +53,20 @@ BEGIN
         SELECT  h.HabitacionId,
                 h.NumeroHabitacion,
                 h.Piso,
-                h.Estado,
-                th.TipoHabitacionId,
-                th.Nombre AS TipoHabitacion,
-                th.PrecioBase,
-                th.Capacidad,
                 CASE 
                     WHEN r.ReservacionId IS NOT NULL THEN 'Reservada'
                     ELSE 'Disponible'
-                END AS EstadoActual
+                END AS EstadoActual,
+                th.TipoHabitacionId,
+                th.Nombre AS TipoHabitacion,
+                th.PrecioBase,
+                th.Capacidad
         FROM Habitacion h
         INNER JOIN TipoHabitacion th ON h.TipoHabitacionId = th.TipoHabitacionId
         LEFT JOIN Reservacion r ON h.HabitacionId = r.HabitacionId
-            AND r.EstadoReservacionId IN (
-                SELECT EstadoReservacionId 
-                FROM EstadoReservacion 
-                WHERE Nombre = 'Confirmada'
-            )
+            AND r.Estado = 'Confirmada'
             AND GETDATE() BETWEEN r.FechaEntrada AND r.FechaSalida
         WHERE h.HabitacionId = @HabitacionId
-        AND h.Activo = 1
     END TRY
     BEGIN CATCH
         THROW;
@@ -95,27 +86,24 @@ BEGIN
         SELECT  h.HabitacionId,
                 h.NumeroHabitacion,
                 h.Piso,
-                h.Estado,
-                th.TipoHabitacionId,
-                th.Nombre AS TipoHabitacion,
-                th.PrecioBase,
-                th.Capacidad,
                 CASE 
                     WHEN r.ReservacionId IS NOT NULL THEN 'Reservada'
                     ELSE 'Disponible'
-                END AS EstadoActual
+                END AS EstadoActual,
+                th.TipoHabitacionId,
+                th.Nombre AS TipoHabitacion,
+                th.PrecioBase,
+                th.Capacidad
         FROM Habitacion h
         INNER JOIN TipoHabitacion th ON h.TipoHabitacionId = th.TipoHabitacionId
         LEFT JOIN Reservacion r ON h.HabitacionId = r.HabitacionId
-            AND r.EstadoReservacionId IN (
-                SELECT EstadoReservacionId 
-                FROM EstadoReservacion 
-                WHERE Nombre = 'Confirmada'
-            )
+            AND r.Estado = 'Confirmada'
             AND GETDATE() BETWEEN r.FechaEntrada AND r.FechaSalida
-        WHERE h.Activo = 1
-        AND (@TipoHabitacionId IS NULL OR h.TipoHabitacionId = @TipoHabitacionId)
-        AND (@Estado IS NULL OR h.Estado = @Estado)
+        WHERE (@TipoHabitacionId IS NULL OR h.TipoHabitacionId = @TipoHabitacionId)
+        AND (@Estado IS NULL OR CASE 
+                WHEN r.ReservacionId IS NOT NULL THEN 'Reservada'
+                ELSE 'Disponible'
+            END = @Estado)
         ORDER BY h.Piso, h.NumeroHabitacion
     END TRY
     BEGIN CATCH
@@ -133,8 +121,8 @@ AS
 BEGIN
     SET NOCOUNT ON;
     BEGIN TRY
-        IF NOT EXISTS (SELECT 1 FROM Habitacion WHERE HabitacionId = @HabitacionId AND Activo = 1)
-            THROW 50000, 'La habitación no existe o está inactiva.', 1;
+        IF NOT EXISTS (SELECT 1 FROM Habitacion WHERE HabitacionId = @HabitacionId)
+            THROW 50000, 'La habitación no existe.', 1;
 
         IF @Estado NOT IN ('Disponible', 'Mantenimiento')
             THROW 50001, 'Estado de habitación no válido.', 1;
@@ -143,11 +131,7 @@ BEGIN
             SELECT 1
             FROM Reservacion r
             WHERE r.HabitacionId = @HabitacionId
-            AND r.EstadoReservacionId IN (
-                SELECT EstadoReservacionId 
-                FROM EstadoReservacion 
-                WHERE Nombre = 'Confirmada'
-            )
+            AND r.Estado = 'Confirmada'
             AND GETDATE() BETWEEN r.FechaEntrada AND r.FechaSalida
         )
             THROW 50002, 'No se puede cambiar el estado de una habitación con reservación activa.', 1;
@@ -155,11 +139,13 @@ BEGIN
         UPDATE Habitacion
         SET Estado = @Estado
         WHERE HabitacionId = @HabitacionId
-        AND Activo = 1
 
         SELECT  h.HabitacionId,
                 h.NumeroHabitacion,
-                h.Estado,
+                CASE 
+                    WHEN @Estado = 'Disponible' THEN 'Disponible'
+                    WHEN @Estado = 'Mantenimiento' THEN 'Mantenimiento'
+                END AS Estado,
                 th.Nombre AS TipoHabitacion
         FROM Habitacion h
         INNER JOIN TipoHabitacion th ON h.TipoHabitacionId = th.TipoHabitacionId
@@ -185,23 +171,17 @@ BEGIN
         SELECT  h.HabitacionId,
                 h.NumeroHabitacion,
                 h.Piso,
-                h.Estado,
-                th.PrecioBase,
                 CASE 
                     WHEN r.ReservacionId IS NOT NULL THEN 'Reservada'
                     ELSE 'Disponible'
-                END AS EstadoActual
+                END AS EstadoActual,
+                th.PrecioBase
         FROM Habitacion h
         INNER JOIN TipoHabitacion th ON h.TipoHabitacionId = th.TipoHabitacionId
         LEFT JOIN Reservacion r ON h.HabitacionId = r.HabitacionId
-            AND r.EstadoReservacionId IN (
-                SELECT EstadoReservacionId 
-                FROM EstadoReservacion 
-                WHERE Nombre = 'Confirmada'
-            )
+            AND r.Estado = 'Confirmada'
             AND @FechaConsulta BETWEEN r.FechaEntrada AND r.FechaSalida
         WHERE h.TipoHabitacionId = @TipoHabitacionId
-        AND h.Activo = 1
         ORDER BY h.NumeroHabitacion
     END TRY
     BEGIN CATCH

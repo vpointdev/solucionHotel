@@ -1,16 +1,27 @@
+USE [master]
+GO
+
+IF DB_ID('Hotel') IS NOT NULL
+BEGIN
+    ALTER DATABASE Hotel SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+    DROP DATABASE Hotel;
+END
+GO
+
 CREATE DATABASE Hotel;
 GO
 
 USE Hotel;
 GO
 
+-- Ahora sí crear las tablas
 CREATE TABLE Perfil (
     PerfilId INT PRIMARY KEY IDENTITY(1,1),
     Nombre VARCHAR(50) NOT NULL,
     Descripcion VARCHAR(200),
-    FechaCreacion DATETIME DEFAULT GETDATE(),
     Activo BIT DEFAULT 1
 );
+GO
 
 CREATE TABLE Usuario (
     UsuarioId INT PRIMARY KEY IDENTITY(1,1),
@@ -21,15 +32,16 @@ CREATE TABLE Usuario (
     FechaCreacion DATETIME DEFAULT GETDATE(),
     Activo BIT DEFAULT 1
 );
+GO
 
 CREATE TABLE UsuarioPorPerfil (
     UsuarioPerfilId INT PRIMARY KEY IDENTITY(1,1),
     UsuarioId INT NOT NULL,
     PerfilId INT NOT NULL,
-    FechaAsignacion DATETIME DEFAULT GETDATE(),
     FOREIGN KEY (UsuarioId) REFERENCES Usuario(UsuarioId),
     FOREIGN KEY (PerfilId) REFERENCES Perfil(PerfilId)
 );
+GO
 
 CREATE TABLE TipoHabitacion (
     TipoHabitacionId INT PRIMARY KEY IDENTITY(1,1),
@@ -37,29 +49,21 @@ CREATE TABLE TipoHabitacion (
     Descripcion VARCHAR(200),
     PrecioBase DECIMAL(10,2) NOT NULL,
     Capacidad INT NOT NULL,
-    FechaCreacion DATETIME DEFAULT GETDATE(),
     Activo BIT DEFAULT 1
 );
+GO
 
 CREATE TABLE Habitacion (
     HabitacionId INT PRIMARY KEY IDENTITY(1,1),
     NumeroHabitacion VARCHAR(10) NOT NULL UNIQUE,
     TipoHabitacionId INT NOT NULL,
     Piso INT NOT NULL,
-    Estado VARCHAR(20) DEFAULT 'Disponible', -- Disponible, Ocupada, Mantenimiento
+    Estado VARCHAR(20) DEFAULT 'Disponible',
     Observaciones VARCHAR(500),
-    FechaCreacion DATETIME DEFAULT GETDATE(),
     Activo BIT DEFAULT 1,
     FOREIGN KEY (TipoHabitacionId) REFERENCES TipoHabitacion(TipoHabitacionId)
 );
-
-CREATE TABLE EstadoReservacion (
-    EstadoReservacionId INT PRIMARY KEY IDENTITY(1,1),
-    Nombre VARCHAR(50) NOT NULL,
-    Descripcion VARCHAR(200),
-    FechaCreacion DATETIME DEFAULT GETDATE(),
-    Activo BIT DEFAULT 1
-);
+GO
 
 CREATE TABLE Reservacion (
     ReservacionId INT PRIMARY KEY IDENTITY(1,1),
@@ -68,27 +72,21 @@ CREATE TABLE Reservacion (
     HabitacionId INT NOT NULL,
     FechaEntrada DATETIME NOT NULL,
     FechaSalida DATETIME NOT NULL,
-    EstadoReservacionId INT NOT NULL,
+    Estado VARCHAR(20) NOT NULL DEFAULT 'Confirmada',
     PrecioTotal DECIMAL(10,2) NOT NULL,
     Observaciones VARCHAR(500),
-    FechaCreacion DATETIME DEFAULT GETDATE(),
-    UsuarioCreacionId INT NOT NULL,
-    FechaModificacion DATETIME,
-    UsuarioModificacionId INT,
     FOREIGN KEY (UsuarioId) REFERENCES Usuario(UsuarioId),
-    FOREIGN KEY (HabitacionId) REFERENCES Habitacion(HabitacionId),
-    FOREIGN KEY (EstadoReservacionId) REFERENCES EstadoReservacion(EstadoReservacionId),
-    FOREIGN KEY (UsuarioCreacionId) REFERENCES Usuario(UsuarioId),
-    FOREIGN KEY (UsuarioModificacionId) REFERENCES Usuario(UsuarioId)
+    FOREIGN KEY (HabitacionId) REFERENCES Habitacion(HabitacionId)
 );
+GO
 
 CREATE TABLE TipoPago (
     TipoPagoId INT PRIMARY KEY IDENTITY(1,1),
     Nombre VARCHAR(50) NOT NULL,
     Descripcion VARCHAR(200),
-    FechaCreacion DATETIME DEFAULT GETDATE(),
     Activo BIT DEFAULT 1
 );
+GO
 
 CREATE TABLE Pago (
     PagoId INT PRIMARY KEY IDENTITY(1,1),
@@ -97,7 +95,7 @@ CREATE TABLE Pago (
     Monto DECIMAL(10,2) NOT NULL,
     FechaPago DATETIME NOT NULL,
     NumeroTransaccion VARCHAR(50),
-    Estado VARCHAR(20) NOT NULL, -- Pendiente, Completado, Cancelado
+    Estado VARCHAR(20) NOT NULL,
     Observaciones VARCHAR(500),
     UsuarioCreacionId INT NOT NULL,
     FechaCreacion DATETIME DEFAULT GETDATE(),
@@ -107,6 +105,7 @@ CREATE TABLE Pago (
 );
 GO
 
+-- Insertar datos iniciales
 INSERT INTO Perfil (Nombre, Descripcion) VALUES
 ('Administrador', 'Acceso completo al sistema'),
 ('Cliente', 'Acceso a reservaciones propias');
@@ -116,6 +115,7 @@ INSERT INTO Usuario (NombreUsuario, Contrasena, Email, Nombre)
 VALUES 
 ('admin', 'admin123', 'admin@hotel.com', 'Admin System'),
 ('cliente', 'cliente123', 'cliente@mail.com', 'Cliente Demo');
+GO
 
 INSERT INTO UsuarioPorPerfil (UsuarioId, PerfilId)
 SELECT 
@@ -137,22 +137,12 @@ GO
 INSERT INTO Habitacion (NumeroHabitacion, TipoHabitacionId, Piso) VALUES
 ('101', (SELECT TipoHabitacionId FROM TipoHabitacion WHERE Nombre = 'Individual'), 1),
 ('102', (SELECT TipoHabitacionId FROM TipoHabitacion WHERE Nombre = 'Individual'), 1),
-
 ('103', (SELECT TipoHabitacionId FROM TipoHabitacion WHERE Nombre = 'Doble'), 1),
 ('104', (SELECT TipoHabitacionId FROM TipoHabitacion WHERE Nombre = 'Doble'), 1),
-
 ('201', (SELECT TipoHabitacionId FROM TipoHabitacion WHERE Nombre = 'Matrimonial'), 2),
 ('202', (SELECT TipoHabitacionId FROM TipoHabitacion WHERE Nombre = 'Matrimonial'), 2),
-
 ('203', (SELECT TipoHabitacionId FROM TipoHabitacion WHERE Nombre = 'Suite'), 2),
 ('204', (SELECT TipoHabitacionId FROM TipoHabitacion WHERE Nombre = 'Suite'), 2);
-GO
-
-INSERT INTO EstadoReservacion (Nombre, Descripcion) VALUES
-('Confirmada', 'Reservación confirmada'),
-('CheckIn', 'Cliente ha ingresado a la habitación'),
-('CheckOut', 'Cliente ha dejado la habitación'),
-('Cancelada', 'Reservación cancelada');
 GO
 
 INSERT INTO TipoPago (Nombre, Descripcion) VALUES
