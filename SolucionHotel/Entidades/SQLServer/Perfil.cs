@@ -1,21 +1,21 @@
-﻿namespace Entidades.SQLServer
+﻿using System;
+
+namespace Entidades.SQLServer
 {
     public class Perfil
     {
         #region Propiedades
-        public int PerfilId { get; set; }
-        public string Nombre { get; set; }
-        public string Descripcion { get; set; }
-        public bool Activo { get; set; }
+        public int Codigo { get; set; }          
+        public string Descripcion { get; set; }  
+        public bool Estado { get; set; }          
         #endregion
 
         #region Constructor
         public Perfil()
         {
-            PerfilId = 0;
-            Nombre = string.Empty;
+            Codigo = 2;
             Descripcion = string.Empty;
-            Activo = true;
+            Estado = true;
         }
         #endregion
     }

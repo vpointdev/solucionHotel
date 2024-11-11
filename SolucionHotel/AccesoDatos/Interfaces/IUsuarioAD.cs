@@ -10,6 +10,5 @@ namespace AccesoDatos.Interfaces
         List<Usuario> Consultar(Usuario P_Entidad);
         List<Perfil> PerfilesUsuario(Usuario P_Entidad);
         bool Autenticacion(Usuario P_Entidad);
-        bool AgregarPerfilUsuario(Usuario P_Entidad);
     }
 }

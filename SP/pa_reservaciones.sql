@@ -1,41 +1,38 @@
 USE Hotel;
 GO
 
--- 1. Primero la función de generar código
 CREATE OR ALTER FUNCTION FN_GenerarCodigoReservacion()
 RETURNS VARCHAR(20)
 AS
 BEGIN
-    RETURN FORMAT(GETDATE(), 'yyyyMMdd-') + 
+    RETURN 'RES-' + FORMAT(GETDATE(), 'yyyyMMdd') + 
            RIGHT('000' + CAST((SELECT COUNT(*) + 1 FROM Reservacion) AS VARCHAR(3)), 3)
 END
 GO
 
--- 2. El SP para obtener por código (ya que es dependencia)
-CREATE OR ALTER PROCEDURE PA_Reservacion_ObtenerPorCodigo
-(
-    @CodigoReservacion VARCHAR(20)
+CREATE OR ALTER FUNCTION FN_CalcularCargoCancelacion(
+    @ReservacionId INT
 )
+RETURNS DECIMAL(10,2)
 AS
 BEGIN
-    SELECT  r.ReservacionId,
-            r.CodigoReservacion,
-            r.FechaEntrada,
-            r.FechaSalida,
-            r.PrecioTotal,
-            h.NumeroHabitacion,
-            th.Nombre AS TipoHabitacion,
-            r.Estado,
-            u.Nombre AS NombreUsuario
-    FROM Reservacion r
-    INNER JOIN Habitacion h ON r.HabitacionId = h.HabitacionId
-    INNER JOIN TipoHabitacion th ON h.TipoHabitacionId = th.TipoHabitacionId
-    INNER JOIN Usuario u ON r.UsuarioId = u.UsuarioId
-    WHERE r.CodigoReservacion = @CodigoReservacion
+    DECLARE @FechaEntrada DATETIME
+    DECLARE @PrecioTotal DECIMAL(10,2)
+    DECLARE @CargoCancelacion DECIMAL(10,2) = 0
+
+    SELECT 
+        @FechaEntrada = FechaEntrada,
+        @PrecioTotal = PrecioTotal
+    FROM Reservacion
+    WHERE ReservacionId = @ReservacionId
+
+    IF DATEDIFF(HOUR, GETDATE(), @FechaEntrada) <= 24
+        SET @CargoCancelacion = @PrecioTotal * 0.25
+    
+    RETURN @CargoCancelacion
 END
 GO
 
--- 3. Ahora sí el SP de crear
 CREATE OR ALTER PROCEDURE PA_Reservacion_Crear
 (
     @UsuarioId INT,
@@ -54,7 +51,7 @@ BEGIN
             SELECT 1
             FROM Reservacion r
             WHERE r.HabitacionId = @HabitacionId
-            AND r.Estado = 'Confirmada'
+            AND r.Estado IN ('Confirmada', 'Pendiente')
             AND (
                 @FechaEntrada BETWEEN r.FechaEntrada AND r.FechaSalida
                 OR @FechaSalida BETWEEN r.FechaEntrada AND r.FechaSalida
@@ -62,22 +59,25 @@ BEGIN
         )
             THROW 50001, 'La habitación no está disponible para las fechas seleccionadas.', 1;
 
-        DECLARE @PrecioTotal DECIMAL(10,2)
-        SELECT @PrecioTotal = th.PrecioBase * DATEDIFF(DAY, @FechaEntrada, @FechaSalida)
+        DECLARE @PrecioTotal DECIMAL(10,2) = 0;
+        
+        SELECT @PrecioTotal = ISNULL(th.PrecioBase, 0) * DATEDIFF(DAY, @FechaEntrada, @FechaSalida)
         FROM Habitacion h
         INNER JOIN TipoHabitacion th ON h.TipoHabitacionId = th.TipoHabitacionId
         WHERE h.HabitacionId = @HabitacionId;
 
         DECLARE @CodigoReservacion VARCHAR(20) = dbo.FN_GenerarCodigoReservacion();
 
+        -- Create reservation
         INSERT INTO Reservacion (
-            CodigoReservacion,
-            UsuarioId,
-            HabitacionId,
-            FechaEntrada,
-            FechaSalida,
-            Estado,
-            PrecioTotal
+            CodigoReservacion, 
+            UsuarioId, 
+            HabitacionId, 
+            FechaEntrada, 
+            FechaSalida, 
+            Estado, 
+            PrecioTotal,
+            PagoProcesado
         )
         VALUES (
             @CodigoReservacion,
@@ -85,17 +85,122 @@ BEGIN
             @HabitacionId,
             @FechaEntrada,
             @FechaSalida,
-            'Confirmada',
-            @PrecioTotal
+            'Pendiente',
+            @PrecioTotal,
+            0
         );
-        
-        EXEC PA_Reservacion_ObtenerPorCodigo @CodigoReservacion;
+
+        SELECT 
+            r.ReservacionId,
+            r.CodigoReservacion,
+            r.FechaEntrada,
+            r.FechaSalida,
+            r.PrecioTotal,
+            r.Estado,
+            h.NumeroHabitacion,
+            th.Nombre AS TipoHabitacion
+        FROM Reservacion r
+        INNER JOIN Habitacion h ON r.HabitacionId = h.HabitacionId
+        INNER JOIN TipoHabitacion th ON h.TipoHabitacionId = th.TipoHabitacionId
+        WHERE r.CodigoReservacion = @CodigoReservacion;
     END TRY
     BEGIN CATCH
         THROW;
     END CATCH
 END;
 GO
+
+CREATE OR ALTER PROCEDURE PA_Reservacion_ProcesarPago
+(
+    @ReservacionId INT,
+    @UsuarioId INT
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    BEGIN TRY
+        -- Validate that the reservation exists and is in a pending state
+        IF NOT EXISTS (
+            SELECT 1 
+            FROM Reservacion 
+            WHERE ReservacionId = @ReservacionId 
+            AND UsuarioId = @UsuarioId
+            AND Estado = 'Pendiente'
+            AND PagoProcesado = 0
+        )
+            THROW 50002, 'Reservación no encontrada o no está pendiente de pago.', 1;
+
+        -- Get the total amount for the reservation
+        DECLARE @MontoTotal DECIMAL(10,2);
+        SELECT @MontoTotal = PrecioTotal
+        FROM Reservacion
+        WHERE ReservacionId = @ReservacionId;
+
+        -- Insert payment record
+        INSERT INTO Pago (
+            ReservacionId,
+            Monto,
+            FechaPago,
+            NumeroTransaccion,
+            Estado,
+            EsCargoCancelacion,
+            Observaciones,
+            UsuarioCreacionId
+        )
+        VALUES (
+            @ReservacionId,
+            @MontoTotal,
+            GETDATE(),
+            'PAY-' + CAST(@ReservacionId AS VARCHAR),
+            'Completado',
+            0,
+            'Pago inicial de reservación',
+            @UsuarioId
+        );
+
+        -- Update reservation status to confirmed
+        UPDATE Reservacion
+        SET 
+            Estado = 'Confirmada',
+            PagoProcesado = 1
+        WHERE ReservacionId = @ReservacionId;
+
+        -- Retrieve all reservation and related data
+        SELECT 
+            r.ReservacionId,
+            r.CodigoReservacion,
+            r.UsuarioId,
+            r.HabitacionId,
+            r.FechaEntrada,
+            r.FechaSalida,
+            r.Estado,
+            r.PrecioTotal,
+            r.PagoProcesado,
+            COALESCE(c.CargoCancelacion, 0.00) AS CargoCancelacion,
+            COALESCE(r.MontoReembolsado, 0.00) AS MontoReembolsado,
+            COALESCE(r.TotalPagado, 0.00) AS TotalPagado,
+            COALESCE(h.NumeroHabitacion, '') AS NumeroHabitacion,
+            COALESCE(th.Nombre, '') AS TipoHabitacion,
+            COALESCE(r.Observaciones, '') AS Observaciones,
+            p.NumeroTransaccion,
+            p.Monto AS MontoPagado,
+            p.FechaPago,
+            'Pago procesado exitosamente' AS Mensaje
+        FROM Reservacion r
+        LEFT JOIN Habitacion h ON r.HabitacionId = h.HabitacionId
+        LEFT JOIN TipoHabitacion th ON h.TipoHabitacionId = th.TipoHabitacionId
+        LEFT JOIN Pago p ON r.ReservacionId = p.ReservacionId AND p.EsCargoCancelacion = 0
+        WHERE r.ReservacionId = @ReservacionId;
+    END TRY
+    BEGIN CATCH
+        -- Re-throw the error for the caller to handle
+        THROW;
+    END CATCH
+END;
+GO
+
+
+
 
 CREATE OR ALTER PROCEDURE PA_Reservacion_Cancelar
 (
@@ -104,48 +209,96 @@ CREATE OR ALTER PROCEDURE PA_Reservacion_Cancelar
 )
 AS
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM Reservacion 
-        WHERE ReservacionId = @ReservacionId 
-        AND UsuarioId = @UsuarioId
-    )
-    BEGIN
-        RAISERROR('Reservación no encontrada o no pertenece al usuario.', 16, 1)
-        RETURN
-    END
+    SET NOCOUNT ON;
+    BEGIN TRY
+        IF NOT EXISTS (
+            SELECT 1 FROM Reservacion 
+            WHERE ReservacionId = @ReservacionId 
+            AND UsuarioId = @UsuarioId
+            AND Estado = 'Confirmada'
+            AND PagoProcesado = 1
+        )
+            THROW 50002, 'Reservación no encontrada o no está en estado válido para cancelar.', 1;
 
-    DECLARE @FechaEntrada DATETIME
-    DECLARE @PrecioTotal DECIMAL(10,2)
-    DECLARE @CargoCancelacion DECIMAL(10,2) = 0
+        DECLARE @CargoCancelacion DECIMAL(10,2) = dbo.FN_CalcularCargoCancelacion(@ReservacionId);
+        DECLARE @MontoReembolso DECIMAL(10,2);
+        
+        SELECT @MontoReembolso = PrecioTotal - @CargoCancelacion
+        FROM Reservacion
+        WHERE ReservacionId = @ReservacionId;
 
-    SELECT @FechaEntrada = FechaEntrada,
-           @PrecioTotal = PrecioTotal
-    FROM Reservacion
-    WHERE ReservacionId = @ReservacionId
+        BEGIN TRANSACTION;
+            -- Process refund
+            INSERT INTO Pago (
+                ReservacionId,
+                Monto,
+                FechaPago,
+                NumeroTransaccion,
+                Estado,
+                EsCargoCancelacion,
+                Observaciones,
+                UsuarioCreacionId
+            )
+            VALUES (
+                @ReservacionId,
+                -@MontoReembolso,
+                GETDATE(),
+                'REF-' + CAST(@ReservacionId AS VARCHAR(10)),
+                'Completado',
+                0,
+                'Reembolso por cancelación',
+                @UsuarioId
+            );
 
-    DECLARE @HorasParaEntrada INT
-    SET @HorasParaEntrada = DATEDIFF(HOUR, GETDATE(), @FechaEntrada)
+            IF @CargoCancelacion > 0
+            BEGIN
+                INSERT INTO Pago (
+                    ReservacionId,
+                    Monto,
+                    FechaPago,
+                    NumeroTransaccion,
+                    Estado,
+                    EsCargoCancelacion,
+                    Observaciones,
+                    UsuarioCreacionId
+                )
+                VALUES (
+                    @ReservacionId,
+                    @CargoCancelacion,
+                    GETDATE(),
+                    'CAN-' + CAST(@ReservacionId AS VARCHAR(10)),
+                    'Completado',
+                    1,
+                    'Cargo por cancelación dentro de 24 horas',
+                    @UsuarioId
+                );
+            END
 
-    IF @HorasParaEntrada <= 24
-    BEGIN
-        SET @CargoCancelacion = @PrecioTotal * 0.25 -- 25% fee
-    END
+            UPDATE Reservacion
+            SET Estado = 'Cancelada'
+            WHERE ReservacionId = @ReservacionId;
 
-    UPDATE Reservacion
-    SET Estado = 'Cancelada'
-    WHERE ReservacionId = @ReservacionId
+        COMMIT;
 
-    SELECT  ReservacionId,
-            CodigoReservacion,
-            'Cancelada' AS Estado,
-            @CargoCancelacion AS CargoCancelacion,
+        SELECT 
+            r.ReservacionId,
+            r.CodigoReservacion,
+            r.Estado,
+            @CargoCancelacion as CargoCancelacion,
+            @MontoReembolso as MontoReembolsado,
             CASE 
-                WHEN @HorasParaEntrada <= 24 THEN 'Aplica cargo del 25%'
-                ELSE 'Sin cargo'
-            END AS Observaciones
-    FROM Reservacion
-    WHERE ReservacionId = @ReservacionId
-END
+                WHEN @CargoCancelacion > 0 THEN 'Cancelación con cargo del 25%'
+                ELSE 'Cancelación sin cargo'
+            END as Observaciones
+        FROM Reservacion r
+        WHERE r.ReservacionId = @ReservacionId;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0
+            ROLLBACK;
+        THROW;
+    END CATCH
+END;
 GO
 
 CREATE OR ALTER PROCEDURE PA_Reservacion_ObtenerPorUsuario
@@ -154,109 +307,61 @@ CREATE OR ALTER PROCEDURE PA_Reservacion_ObtenerPorUsuario
 )
 AS
 BEGIN
-    SELECT  r.ReservacionId,
-            r.CodigoReservacion,
-            r.FechaEntrada,
-            r.FechaSalida,
-            r.PrecioTotal,
-            h.NumeroHabitacion,
-            th.Nombre AS TipoHabitacion,
-            r.Estado
+    SET NOCOUNT ON;
+    SELECT 
+        r.ReservacionId,
+        r.CodigoReservacion,
+        r.FechaEntrada,
+        r.FechaSalida,
+        r.PrecioTotal,
+        h.NumeroHabitacion,
+        th.Nombre AS TipoHabitacion,
+        r.Estado,
+        r.PagoProcesado,
+        ISNULL((
+            SELECT SUM(Monto)
+            FROM Pago p
+            WHERE p.ReservacionId = r.ReservacionId
+            AND p.Estado = 'Completado'
+            AND p.EsCargoCancelacion = 0
+        ), 0) AS TotalPagado
     FROM Reservacion r
     INNER JOIN Habitacion h ON r.HabitacionId = h.HabitacionId
     INNER JOIN TipoHabitacion th ON h.TipoHabitacionId = th.TipoHabitacionId
     WHERE r.UsuarioId = @UsuarioId
-    ORDER BY r.FechaEntrada DESC
-END
+    ORDER BY r.FechaEntrada DESC;
+END;
 GO
 
-CREATE OR ALTER PROCEDURE PA_Reservacion_ObtenerPorCodigo
+CREATE OR ALTER PROCEDURE PA_Habitacion_ObtenerDisponibles
 (
-    @CodigoReservacion VARCHAR(20)
+    @FechaEntrada DATETIME,
+    @FechaSalida DATETIME
 )
 AS
 BEGIN
-    SELECT  r.ReservacionId,
-            r.CodigoReservacion,
-            r.FechaEntrada,
-            r.FechaSalida,
-            r.PrecioTotal,
-            h.NumeroHabitacion,
-            th.Nombre AS TipoHabitacion,
-            r.Estado,
-            u.Nombre AS NombreUsuario
-    FROM Reservacion r
-    INNER JOIN Habitacion h ON r.HabitacionId = h.HabitacionId
-    INNER JOIN TipoHabitacion th ON h.TipoHabitacionId = th.TipoHabitacionId
-    INNER JOIN Usuario u ON r.UsuarioId = u.UsuarioId
-    WHERE r.CodigoReservacion = @CodigoReservacion
-END
-GO
-
-CREATE OR ALTER PROCEDURE PA_Reservacion_ActualizarCheckOut
-AS
-BEGIN
-    UPDATE r
-    SET r.Estado = 'CheckOut'
-    FROM Reservacion r
-    WHERE r.FechaSalida < GETDATE()
-    AND r.Estado = 'Confirmada'
-
+    SET NOCOUNT ON;
     SELECT 
-        COUNT(*) AS ReservacionesActualizadas,
-        'Reservaciones actualizadas a CheckOut' AS Mensaje
-    FROM Reservacion
-    WHERE Estado = 'CheckOut'
-    AND FechaSalida < GETDATE()
-END
-GO
-
-CREATE OR ALTER PROCEDURE PA_Reporte_ActualizarYObtenerIngresos
-(
-    @FechaInicio DATETIME,
-    @FechaFin DATETIME
-)
-AS
-BEGIN
-    EXEC PA_Reservacion_ActualizarCheckOut
-    SELECT  
+        h.HabitacionId,
+        h.NumeroHabitacion,
         th.Nombre AS TipoHabitacion,
-        COUNT(r.ReservacionId) AS CantidadReservas,
-        SUM(r.PrecioTotal) AS TotalIngresos,
-        MIN(r.PrecioTotal) AS IngresoMinimo,
-        MAX(r.PrecioTotal) AS IngresoMaximo,
-        AVG(r.PrecioTotal) AS PromedioIngreso
-    FROM TipoHabitacion th
-    LEFT JOIN Habitacion h ON th.TipoHabitacionId = h.TipoHabitacionId
-    LEFT JOIN Reservacion r ON h.HabitacionId = r.HabitacionId
-    AND r.FechaEntrada BETWEEN @FechaInicio AND @FechaFin
-    AND r.Estado = 'CheckOut'
-    GROUP BY th.Nombre
-    ORDER BY th.Nombre
-END
-GO
-
-CREATE OR ALTER PROCEDURE PA_Reporte_OcupacionHabitaciones
-(
-    @FechaInicio DATETIME,
-    @FechaFin DATETIME
-)
-AS
-BEGIN
-    EXEC PA_Reservacion_ActualizarCheckOut
-    SELECT  
-        th.Nombre AS TipoHabitacion,
-        COUNT(DISTINCT h.HabitacionId) AS TotalHabitaciones,
-        COUNT(DISTINCT r.ReservacionId) AS TotalReservas,
-        CAST(COUNT(DISTINCT r.ReservacionId) AS FLOAT) / 
-        CAST(COUNT(DISTINCT h.HabitacionId) * DATEDIFF(DAY, @FechaInicio, @FechaFin) AS FLOAT) * 100 AS PorcentajeOcupacion
-    FROM TipoHabitacion th
-    LEFT JOIN Habitacion h ON th.TipoHabitacionId = h.TipoHabitacionId
-    LEFT JOIN Reservacion r ON h.HabitacionId = r.HabitacionId
-    AND r.FechaEntrada BETWEEN @FechaInicio AND @FechaFin
-    AND r.Estado IN ('Confirmada', 'CheckOut')
+        th.PrecioBase,
+        th.Capacidad,
+        h.Piso
+    FROM Habitacion h
+    INNER JOIN TipoHabitacion th ON h.TipoHabitacionId = th.TipoHabitacionId
     WHERE h.Activo = 1
-    GROUP BY th.Nombre
-    ORDER BY th.Nombre
-END
+    AND h.Estado = 'Disponible'
+    AND NOT EXISTS (
+        SELECT 1
+        FROM Reservacion r
+        WHERE r.HabitacionId = h.HabitacionId
+        AND r.Estado IN ('Confirmada', 'Pendiente')
+        AND (
+            @FechaEntrada BETWEEN r.FechaEntrada AND r.FechaSalida
+            OR @FechaSalida BETWEEN r.FechaEntrada AND r.FechaSalida
+        )
+    )
+    ORDER BY th.PrecioBase;
+END;
 GO

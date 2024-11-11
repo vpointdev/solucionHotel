@@ -1,172 +1,154 @@
-USE Hotel;
+USE Hotel
 GO
 
--- PA_Usuario_Autenticar
-CREATE PROCEDURE [dbo].[PA_Usuario_Autenticar]
-    @NombreUsuario VARCHAR(50),
-    @Contrasena VARCHAR(50)
+CREATE PROCEDURE PA_Usuario_Crear
+    @Usuario VARCHAR(50),
+    @Password VARCHAR(50),
+    @Fecha DATETIME,
+    @Correo VARCHAR(100),
+    @Estado BIT
 AS
 BEGIN
-    SET NOCOUNT ON;
-    
-    SELECT U.*, P.PerfilId, P.Nombre AS NombrePerfil 
-    FROM Usuario U
-    INNER JOIN UsuarioPorPerfil UP ON U.UsuarioId = UP.UsuarioId
-    INNER JOIN Perfil P ON UP.PerfilId = P.PerfilId
-    WHERE U.NombreUsuario = @NombreUsuario 
-    AND U.Contrasena = @Contrasena 
-    AND U.Activo = 1;
-END
-GO
-
--- PA_Usuario_Crear
-CREATE PROCEDURE [dbo].[PA_Usuario_Crear]
-    @NombreUsuario VARCHAR(50),
-    @Contrasena VARCHAR(50),
-    @Email VARCHAR(100),
-    @Nombre VARCHAR(100),
-    @PerfilId INT = 2  -- Por defecto es Cliente (PerfilId = 2)
-AS
-BEGIN
-    SET NOCOUNT ON;
-    
     BEGIN TRY
-        BEGIN TRANSACTION;
-            
-        -- Insertar Usuario
-        INSERT INTO Usuario (NombreUsuario, Contrasena, Email, Nombre)
-        VALUES (@NombreUsuario, @Contrasena, @Email, @Nombre);
+        BEGIN TRANSACTION
+        IF EXISTS (SELECT 1 FROM Usuario WHERE NombreUsuario = @Usuario)
+        BEGIN
+            ROLLBACK TRANSACTION
+            RETURN 0
+        END
+        INSERT INTO Usuario (NombreUsuario, Clave, FechaRegistro, CorreoRegistro, Estado)
+        VALUES (@Usuario, @Password, @Fecha, @Correo, @Estado)
         
-        DECLARE @UsuarioId INT = SCOPE_IDENTITY();
-            
-        -- Asignar Perfil
         INSERT INTO UsuarioPorPerfil (UsuarioId, PerfilId)
-        VALUES (@UsuarioId, @PerfilId);
-            
-        COMMIT TRANSACTION;
-        SELECT @UsuarioId AS UsuarioId;
+        VALUES (SCOPE_IDENTITY(), 2) -- 2 = Cliente (Usando el Codigo de Perfil)
+        
+        COMMIT TRANSACTION
+        RETURN 1
     END TRY
     BEGIN CATCH
         IF @@TRANCOUNT > 0
-            ROLLBACK TRANSACTION;
-            
-        THROW;
+            ROLLBACK TRANSACTION
+        RETURN 0
     END CATCH
 END
 GO
 
--- PA_Usuario_Consultar
-CREATE PROCEDURE [dbo].[PA_Usuario_Consultar]
-    @NombreUsuario VARCHAR(50) = ''
+CREATE PROCEDURE PA_Usuario_Actualizar
+    @Usuario VARCHAR(50),
+    @Pass VARCHAR(50),
+    @Fecha DATETIME,
+    @Correo VARCHAR(100),
+    @Estado BIT
 AS
 BEGIN
-    SET NOCOUNT ON;
-    
+    BEGIN TRY
+        BEGIN TRANSACTION
+        IF NOT EXISTS (SELECT 1 FROM Usuario WHERE NombreUsuario = @Usuario)
+        BEGIN
+            ROLLBACK TRANSACTION
+            RETURN 0
+        END
+        
+        UPDATE Usuario 
+        SET Clave = @Pass,
+            FechaRegistro = @Fecha,
+            CorreoRegistro = @Correo,
+            Estado = @Estado
+        WHERE NombreUsuario = @Usuario
+        
+        COMMIT TRANSACTION
+        RETURN 1
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0
+            ROLLBACK TRANSACTION
+        RETURN 0
+    END CATCH
+END
+GO
+
+CREATE PROCEDURE PA_Usuario_Eliminar
+    @Usuario VARCHAR(50)
+AS
+BEGIN
+    BEGIN TRY
+        BEGIN TRANSACTION
+        IF NOT EXISTS (SELECT 1 FROM Usuario WHERE NombreUsuario = @Usuario)
+        BEGIN
+            ROLLBACK TRANSACTION
+            RETURN 0
+        END
+        
+        DELETE FROM UsuarioPorPerfil
+        WHERE UsuarioId = (SELECT UsuarioId FROM Usuario WHERE NombreUsuario = @Usuario)
+        
+        UPDATE Usuario 
+        SET Estado = 0
+        WHERE NombreUsuario = @Usuario
+        
+        COMMIT TRANSACTION
+        RETURN 1
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0
+            ROLLBACK TRANSACTION
+        RETURN 0
+    END CATCH
+END
+GO
+
+CREATE PROCEDURE PA_Usuario_ObtenerPorId
+    @Usuario VARCHAR(50)
+AS
+BEGIN
     SELECT 
-        U.*,
-        P.PerfilId,
-        P.Nombre AS NombrePerfil
-    FROM Usuario U
-    INNER JOIN UsuarioPorPerfil UP ON U.UsuarioId = UP.UsuarioId
-    INNER JOIN Perfil P ON UP.PerfilId = P.PerfilId
-    WHERE (@NombreUsuario = '' OR U.NombreUsuario = @NombreUsuario)
-    AND U.Activo = 1;
+        u.UsuarioId,
+        u.NombreUsuario,
+        u.Clave,
+        u.FechaRegistro,
+        u.CorreoRegistro,
+        u.Estado
+    FROM Usuario u
+    WHERE u.NombreUsuario = CASE 
+        WHEN @Usuario = '''''' THEN u.NombreUsuario 
+        ELSE @Usuario 
+    END
+    AND u.Estado = 1
 END
 GO
 
--- PA_Usuario_Actualizar
-CREATE PROCEDURE [dbo].[PA_Usuario_Actualizar]
-    @UsuarioId INT,
-    @NombreUsuario VARCHAR(50),
-    @Contrasena VARCHAR(50),
-    @Email VARCHAR(100),
-    @Nombre VARCHAR(100),
-    @PerfilId INT
+CREATE PROCEDURE PA_Usuario_Autenticar
+    @Usuario VARCHAR(50),
+    @Clave VARCHAR(50)
 AS
 BEGIN
-    SET NOCOUNT ON;
-    
-    BEGIN TRY
-        BEGIN TRANSACTION;
-        
-        UPDATE Usuario
-        SET NombreUsuario = @NombreUsuario,
-            Contrasena = @Contrasena,
-            Email = @Email,
-            Nombre = @Nombre
-        WHERE UsuarioId = @UsuarioId;
-        
-        UPDATE UsuarioPorPerfil
-        SET PerfilId = @PerfilId
-        WHERE UsuarioId = @UsuarioId;
-        
-        COMMIT TRANSACTION;
-        
-        SELECT @@ROWCOUNT;
-    END TRY
-    BEGIN CATCH
-        IF @@TRANCOUNT > 0
-            ROLLBACK TRANSACTION;
-            
-        THROW;
-    END CATCH
+    SELECT 
+        u.UsuarioId,
+        u.NombreUsuario,
+        u.Clave,
+        u.FechaRegistro,
+        u.CorreoRegistro,
+        u.Estado
+    FROM Usuario u
+    WHERE u.NombreUsuario = @Usuario
+    AND u.Clave = @Clave
+    AND u.Estado = 1
 END
 GO
 
--- PA_Usuario_Eliminar
-CREATE PROCEDURE [dbo].[PA_Usuario_Eliminar]
-    @UsuarioId INT
+CREATE OR ALTER PROCEDURE PA_Usuario_ObtenerPerfiles
+    @Usuario VARCHAR(50)
 AS
 BEGIN
-    SET NOCOUNT ON;
-    
-    UPDATE Usuario
-    SET Activo = 0
-    WHERE UsuarioId = @UsuarioId;
-    
-    SELECT @@ROWCOUNT;
-END
-GO
-
--- PA_Usuario_ObtenerPerfiles
-CREATE PROCEDURE [dbo].[PA_Usuario_ObtenerPerfiles]
-    @UsuarioId INT
-AS
-BEGIN
-    SET NOCOUNT ON;
-    
-    SELECT DISTINCT P.*
-    FROM Perfil P
-    INNER JOIN UsuarioPorPerfil UP ON P.PerfilId = UP.PerfilId
-    WHERE UP.UsuarioId = @UsuarioId
-    AND P.Activo = 1;
-END
-GO
-
--- PA_Usuario_CambiarPerfil
-CREATE PROCEDURE [dbo].[PA_Usuario_CambiarPerfil]
-    @UsuarioId INT,
-    @PerfilId INT
-AS
-BEGIN
-    SET NOCOUNT ON;
-    
-    BEGIN TRY
-        BEGIN TRANSACTION;
-        
-        UPDATE UsuarioPorPerfil
-        SET PerfilId = @PerfilId
-        WHERE UsuarioId = @UsuarioId;
-        
-        COMMIT TRANSACTION;
-        
-        SELECT @@ROWCOUNT;
-    END TRY
-    BEGIN CATCH
-        IF @@TRANCOUNT > 0
-            ROLLBACK TRANSACTION;
-            
-        THROW;
-    END CATCH
+    SELECT 
+        p.Codigo,        
+        p.Descripcion,   
+        p.Estado        
+    FROM Perfil p
+    INNER JOIN UsuarioPorPerfil up ON p.Codigo = up.PerfilId
+    INNER JOIN Usuario u ON up.UsuarioId = u.UsuarioId
+    WHERE u.NombreUsuario = @Usuario
+    AND u.Estado = 1
+    AND p.Estado = 1;
 END
 GO

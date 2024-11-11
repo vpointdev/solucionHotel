@@ -1,8 +1,12 @@
-﻿namespace Entidades.SQLServer
+﻿using System;
+using System.Collections.Generic;
+
+namespace Entidades.SQLServer
 {
     public class Usuario
     {
         #region Propiedades
+        public int UsuarioId { get; set; }
         public string NombreUsuario { get; set; }
         public string Clave { get; set; }
         public DateTime FechaRegistro { get; set; }
@@ -14,9 +18,10 @@
         #region Constructor
         public Usuario()
         {
+            UsuarioId = 0;
             NombreUsuario = string.Empty;
             Clave = string.Empty;
-            FechaRegistro = DateTime.MinValue;
+            FechaRegistro = DateTime.Now;
             CorreoRegistro = string.Empty;
             Estado = true;
             Perfil = new List<Perfil>();

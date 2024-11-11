@@ -28,12 +28,6 @@
           <AssociatedConnUserName />
           <FullPath>pa_habitaciones.sql</FullPath>
         </FileNode>
-        <FileNode Name="pa_pagos.sql">
-          <AssociatedConnectionMoniker>8c91a03d-f9b4-46c0-a305-b5dcc79ff907:VPOINTDEV:True</AssociatedConnectionMoniker>
-          <AssociatedConnSrvName>VPOINTDEV</AssociatedConnSrvName>
-          <AssociatedConnUserName />
-          <FullPath>pa_pagos.sql</FullPath>
-        </FileNode>
         <FileNode Name="pa_reservaciones.sql">
           <AssociatedConnectionMoniker>8c91a03d-f9b4-46c0-a305-b5dcc79ff907:VPOINTDEV:True</AssociatedConnectionMoniker>
           <AssociatedConnSrvName>VPOINTDEV</AssociatedConnSrvName>
@@ -57,6 +51,12 @@
           <AssociatedConnSrvName>VPOINTDEV</AssociatedConnSrvName>
           <AssociatedConnUserName />
           <FullPath>script_usuariobd.sql</FullPath>
+        </FileNode>
+        <FileNode Name="SQLQuery1.sql">
+          <AssociatedConnectionMoniker>8c91a03d-f9b4-46c0-a305-b5dcc79ff907:VPOINTDEV:True</AssociatedConnectionMoniker>
+          <AssociatedConnSrvName>VPOINTDEV</AssociatedConnSrvName>
+          <AssociatedConnUserName />
+          <FullPath>SQLQuery1.sql</FullPath>
         </FileNode>
       </Items>
     </LogicalFolder>

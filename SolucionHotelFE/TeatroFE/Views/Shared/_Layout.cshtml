@@ -1,0 +1,118 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - HotelFE</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-light bg-white border-bottom box-shadow mb-3">
+            <div class="container-fluid">
+                <!-- Brand -->
+                <a class="navbar-brand d-flex align-items-center" asp-controller="Home" asp-action="Index">
+                    <i class="fas fa-hotel me-2 text-primary"></i>
+                    <span>HotelFE</span>
+                </a>
+                <!-- Items de navegación -->
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <!-- Catálogos Dropdown -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-book me-1"></i> Catálogos
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" asp-controller="Room" asp-action="Index">Habitaciones</a></li>
+                                <li><a class="dropdown-item" asp-controller="Client" asp-action="Index">Clientes</a></li>
+                                <li><a class="dropdown-item" asp-controller="RoomType" asp-action="Index">Tipos de Habitación</a></li>
+                                <li><a class="dropdown-item" asp-controller="User" asp-action="Index">Usuarios</a></li>
+                            </ul>
+                        </li>
+
+                        <!-- Procesos Dropdown -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-cogs me-1"></i> Procesos
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" asp-controller="Reservation" asp-action="Create">Nueva Reservación</a></li>
+                                <li><a class="dropdown-item" asp-controller="Reservation" asp-action="Cancel">Cancelar Reservación</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" asp-controller="CheckIn" asp-action="Index">Registro de Entrada</a></li>
+                                <li><a class="dropdown-item" asp-controller="CheckOut" asp-action="Index">Registro de Salida</a></li>
+                            </ul>
+                        </li>
+
+                        <!-- Consultas Dropdown -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-search me-1"></i> Consultas
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" asp-controller="Room" asp-action="Availability">Disponibilidad de Habitaciones</a></li>
+                                <li><a class="dropdown-item" asp-controller="Reservation" asp-action="Search">Buscar Reservaciones</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" asp-controller="Report" asp-action="Revenue">Reporte de Ingresos</a></li>
+                                <li><a class="dropdown-item" asp-controller="Report" asp-action="Occupancy">Reporte de Ocupación</a></li>
+                            </ul>
+                        </li>
+
+                        <!-- Bitácora -->
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Bitacora" asp-action="Index">
+                                <i class="fas fa-history me-1"></i> Bitácora
+                            </a>
+                        </li>
+                    </ul>
+
+                    <!-- Menú de Usuario -->
+                    <ul class="navbar-nav">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-user-circle me-1"></i> Usuario
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <a class="dropdown-item text-danger" asp-controller="Autenticacion" asp-action="CerrarSesion">
+                                        <i class="fas fa-sign-out-alt me-1"></i> Cerrar Sesión
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Contenido Principal -->
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <!-- Pie de página -->
+    <footer class="border-top footer text-muted">
+        <div class="container">
+            <div class="row py-3">
+                <div class="col-md-6 text-center text-md-start">
+                    &copy; 2024 - HotelFE - Sistema de Gestión Hotelera
+                </div>
+                <div class="col-md-6 text-center text-md-end">
+                    <a asp-controller="Home" asp-action="Privacy">Privacidad</a> 
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

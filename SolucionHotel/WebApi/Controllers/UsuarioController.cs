@@ -47,8 +47,8 @@ namespace WebApi.Controllers
                 NombreUsuario = pUsuario,
                 Clave = P_Entidad.Clave,
                 FechaRegistro = P_Entidad.FechaRegistro,
-                Estado = P_Entidad.Estado,
-                CorreoRegistro = P_Entidad.CorreoRegistro
+                CorreoRegistro = P_Entidad.CorreoRegistro,
+                Estado = P_Entidad.Estado
             });
         }
 
@@ -72,21 +72,15 @@ namespace WebApi.Controllers
             });
         }
 
-        [HttpPost]
+        [HttpGet]
         [Route(nameof(Autenticacion))]
-        public bool Autenticacion([FromBody] AuthenticationRequest request)
+        public bool Autenticacion([FromHeader] string pUsuario, [FromHeader] string pPassword)
         {
             return _iUsuarioLN.Autenticacion(new Usuario
             {
-                NombreUsuario = request.Usuario,
-                Clave = request.Password
+                NombreUsuario = pUsuario,
+                Clave = pPassword
             });
         }
     }
-}
-
-public class AuthenticationRequest
-{
-    public string Usuario { get; set; }
-    public string Password { get; set; }
 }

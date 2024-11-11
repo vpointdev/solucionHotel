@@ -5,7 +5,7 @@ using Negocio.Interfaces;
 namespace WebApi.Controllers
 {
     [ApiController]
-    [Route("api/Habitacion")]
+    [Route("api/[controller]")]
     public class HabitacionController : Controller
     {
         #region Atributos
@@ -25,69 +25,42 @@ namespace WebApi.Controllers
         }
 
         [HttpPost]
-        [Route(nameof(AgregarHabitacion))]
-        public bool AgregarHabitacion([FromBody] Habitacion P_Entidad)
+        [Route(nameof(Crear))]
+        public Habitacion Crear([FromBody] Habitacion habitacion)
         {
-            return _iHabitacionLN.Agregar(P_Entidad);
+            return _iHabitacionLN.Crear(habitacion);
         }
 
-        [HttpDelete]
-        [Route(nameof(EliminarHabitacion))]
-        public bool EliminarHabitacion([FromHeader] string pNumeroHabitacion)
+        [HttpGet]
+        [Route(nameof(Obtener))]
+        public List<Habitacion> Obtener(
+            [FromQuery] int? habitacionId = null,
+            [FromQuery] string? numeroHabitacion = null,
+            [FromQuery] int? tipoHabitacionId = null,
+            [FromQuery] string? estado = null)
         {
-            return _iHabitacionLN.Eliminar(new Habitacion { NumeroHabitacion = pNumeroHabitacion });
+            return _iHabitacionLN.Obtener(habitacionId, numeroHabitacion, tipoHabitacionId, estado);
+        }
+
+        [HttpGet]
+        [Route(nameof(ObtenerTodos))]
+        public List<Habitacion> ObtenerTodos()
+        {
+            return _iHabitacionLN.Obtener();
         }
 
         [HttpPut]
-        [Route(nameof(ModificarHabitacion))]
-        public bool ModificarHabitacion([FromHeader] string pNumeroHabitacion, [FromBody] Habitacion P_Entidad)
+        [Route(nameof(Actualizar))]
+        public Habitacion Actualizar([FromBody] Habitacion habitacion)
         {
-            return _iHabitacionLN.Modificar(new Habitacion
-            {
-                NumeroHabitacion = pNumeroHabitacion,
-                TipoHabitacionId = P_Entidad.TipoHabitacionId,
-                Piso = P_Entidad.Piso,
-                Estado = P_Entidad.Estado,
-                Observaciones = P_Entidad.Observaciones
-            });
+            return _iHabitacionLN.Actualizar(habitacion);
         }
 
-        [HttpGet]
-        [Route(nameof(ConsultarHabitacion))]
-        public List<Habitacion> ConsultarHabitacion([FromHeader] string pNumeroHabitacion)
+        [HttpDelete]
+        [Route("Eliminar/{habitacionId}")]
+        public bool Eliminar(int habitacionId)
         {
-            return _iHabitacionLN.Consultar(new Habitacion
-            {
-                NumeroHabitacion = string.IsNullOrEmpty(pNumeroHabitacion.Replace("''", string.Empty)) ? string.Empty : pNumeroHabitacion
-            });
-        }
-
-        [HttpGet]
-        [Route(nameof(ObtenerDisponibles))]
-        public List<Habitacion> ObtenerDisponibles([FromHeader] DateTime pFechaEntrada, [FromHeader] DateTime pFechaSalida)
-        {
-            return _iHabitacionLN.ObtenerDisponibles(pFechaEntrada, pFechaSalida);
-        }
-
-        [HttpGet]
-        [Route(nameof(ObtenerTiposHabitacion))]
-        public List<TipoHabitacion> ObtenerTiposHabitacion()
-        {
-            return _iHabitacionLN.ObtenerTiposHabitacion();
-        }
-
-        [HttpGet]
-        [Route(nameof(ConsultarOcupacion))]
-        public List<Habitacion> ConsultarOcupacion([FromHeader] DateTime pFechaInicio, [FromHeader] DateTime pFechaFin)
-        {
-            return _iHabitacionLN.ConsultarOcupacion(pFechaInicio, pFechaFin);
-        }
-
-        [HttpGet]
-        [Route(nameof(ObtenerIngresos))]
-        public decimal ObtenerIngresos([FromHeader] DateTime pFechaInicio, [FromHeader] DateTime pFechaFin)
-        {
-            return _iHabitacionLN.ObtenerIngresos(pFechaInicio, pFechaFin);
+            return _iHabitacionLN.Eliminar(habitacionId);
         }
     }
 }

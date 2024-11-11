@@ -17,7 +17,7 @@ namespace Entidades
         public string UsuarioRegistro { get; set; }
 
         [BsonElement("action")]
-        public string AccionRealizada { get; set; }
+        public string AccesionRealizada { get; set; }
 
         [BsonElement("module")]
         public string ModuloSistema { get; set; }
@@ -32,7 +32,7 @@ namespace Entidades
             ID = string.Empty;
             FechaRegistro = DateTime.MinValue;
             UsuarioRegistro = string.Empty;
-            AccionRealizada = string.Empty;
+            AccesionRealizada = string.Empty;
             ModuloSistema = string.Empty;
             Descripcion = string.Empty;
         }

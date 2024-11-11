@@ -8,66 +8,43 @@ namespace Negocio
 {
     public class HabitacionLN : IHabitacionLN
     {
-        #region Atributos
-        private readonly IHabitacionAD _iHabitacionAD;
-        #endregion
+        private readonly IHabitacionAD _habitacionAD;
 
-        #region Propiedades
-        public TransactionOptions TransacionOpciones { get; set; }
-        #endregion
-
-        #region Constructor
-        public HabitacionLN(IHabitacionAD iHabitacionAD)
+        public HabitacionLN(IHabitacionAD habitacionAD)
         {
-            _iHabitacionAD = iHabitacionAD;
-            TransacionOpciones = new TransactionOptions
-            {
-                Timeout = TransactionManager.DefaultTimeout,
-                IsolationLevel = IsolationLevel.ReadUncommitted
-            };
-        }
-        #endregion
-
-        #region Métodos Públicos
-        public bool Agregar(Habitacion P_Entidad)
-        {
-            return _iHabitacionAD.Agregar(P_Entidad);
+            _habitacionAD = habitacionAD;
         }
 
-        public bool Modificar(Habitacion P_Entidad)
+        public Habitacion Crear(Habitacion entidad)
         {
-            return _iHabitacionAD.Modificar(P_Entidad);
+            return _habitacionAD.Crear(
+                entidad.NumeroHabitacion,
+                entidad.TipoHabitacionId,
+                entidad.Piso,
+                entidad.Estado,
+                entidad.Observaciones
+            );
         }
 
-        public bool Eliminar(Habitacion P_Entidad)
+        public List<Habitacion> Obtener(int? habitacionId = null, string numeroHabitacion = null, int? tipoHabitacionId = null, string estado = null)
         {
-            return _iHabitacionAD.Eliminar(P_Entidad);
+            return _habitacionAD.Obtener(habitacionId, numeroHabitacion, tipoHabitacionId, estado);
         }
 
-        public List<Habitacion> Consultar(Habitacion P_Entidad)
+        public Habitacion Actualizar(Habitacion entidad)
         {
-            return _iHabitacionAD.Consultar(P_Entidad);
+            return _habitacionAD.Actualizar(
+                entidad.HabitacionId,
+                entidad.TipoHabitacionId,
+                entidad.Piso,
+                entidad.Estado,
+                entidad.Observaciones
+            );
         }
 
-        public List<Habitacion> ObtenerDisponibles(DateTime pFechaEntrada, DateTime pFechaSalida)
+        public bool Eliminar(int habitacionId)
         {
-            return _iHabitacionAD.ObtenerDisponibles(pFechaEntrada, pFechaSalida);
+            return _habitacionAD.Eliminar(habitacionId);
         }
-
-        public List<TipoHabitacion> ObtenerTiposHabitacion()
-        {
-            return _iHabitacionAD.ObtenerTiposHabitacion();
-        }
-
-        public List<Habitacion> ConsultarOcupacion(DateTime pFechaInicio, DateTime pFechaFin)
-        {
-            return _iHabitacionAD.ConsultarOcupacion(pFechaInicio, pFechaFin);
-        }
-
-        public decimal ObtenerIngresos(DateTime pFechaInicio, DateTime pFechaFin)
-        {
-            return _iHabitacionAD.ObtenerIngresos(pFechaInicio, pFechaFin);
-        }
-        #endregion
     }
 }

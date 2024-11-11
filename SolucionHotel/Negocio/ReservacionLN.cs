@@ -1,7 +1,6 @@
-﻿using AccesoDatos.Interfaces;
-using Entidades;
+﻿using Negocio.Interfaces;
+using AccesoDatos.Interfaces;
 using Entidades.SQLServer;
-using Negocio.Interfaces;
 using System.Transactions;
 
 namespace Negocio
@@ -29,54 +28,64 @@ namespace Negocio
         #endregion
 
         #region Métodos Públicos
-        public bool Agregar(Reservacion P_Entidad)
+        public Reservacion Crear(Reservacion entidad)
         {
-            return _iReservacionAD.Agregar(P_Entidad);
+            try
+            {
+                return _iReservacionAD.Crear(entidad);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
-        public bool Modificar(Reservacion P_Entidad)
+        public Reservacion ProcesarPago(int reservacionId, int usuarioId)
         {
-            return _iReservacionAD.Modificar(P_Entidad);
+            try
+            {
+                return _iReservacionAD.ProcesarPago(reservacionId, usuarioId);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
-        public bool Eliminar(Reservacion P_Entidad)
+        public Reservacion Cancelar(int reservacionId, int usuarioId)
         {
-            return _iReservacionAD.Eliminar(P_Entidad);
+            try
+            {
+                return _iReservacionAD.Cancelar(reservacionId, usuarioId);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
-        public List<Reservacion> Consultar(Reservacion P_Entidad)
+        public List<Reservacion> ObtenerPorUsuario(int usuarioId)
         {
-            return _iReservacionAD.Consultar(P_Entidad);
+            try
+            {
+                return _iReservacionAD.ObtenerPorUsuario(usuarioId);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
-        public bool CancelarReservacion(string pCodigoReservacion)
+        public List<Habitacion> ObtenerDisponibles(DateTime fechaEntrada, DateTime fechaSalida)
         {
-            return _iReservacionAD.CancelarReservacion(pCodigoReservacion);
-        }
-
-        public List<Reservacion> ConsultarPorUsuario(int pUsuarioId)
-        {
-            return _iReservacionAD.ConsultarPorUsuario(pUsuarioId);
-        }
-
-        public List<Reservacion> ConsultarPorFecha(DateTime pFechaInicio, DateTime pFechaFin)
-        {
-            return _iReservacionAD.ConsultarPorFecha(pFechaInicio, pFechaFin);
-        }
-
-        public decimal CalcularCargoCancelacion(string pCodigoReservacion)
-        {
-            return _iReservacionAD.CalcularCargoCancelacion(pCodigoReservacion);
-        }
-
-        public bool CompletarCheckIn(string pCodigoReservacion)
-        {
-            return _iReservacionAD.CompletarCheckIn(pCodigoReservacion);
-        }
-
-        public bool CompletarCheckOut(string pCodigoReservacion)
-        {
-            return _iReservacionAD.CompletarCheckOut(pCodigoReservacion);
+            try
+            {
+                return _iReservacionAD.ObtenerDisponibles(fechaEntrada, fechaSalida);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
         #endregion
     }

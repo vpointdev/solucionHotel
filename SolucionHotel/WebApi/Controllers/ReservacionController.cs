@@ -4,8 +4,8 @@ using Negocio.Interfaces;
 
 namespace WebApi.Controllers
 {
-    [ApiController]
     [Route("api/Reservacion")]
+    [ApiController]
     public class ReservacionController : Controller
     {
         #region Atributos
@@ -19,94 +19,88 @@ namespace WebApi.Controllers
         }
         #endregion
 
+        #region Vista
         public IActionResult Index()
         {
             return View();
         }
+        #endregion
 
+        #region Métodos Públicos
         [HttpPost]
-        [Route(nameof(AgregarReservacion))]
-        public bool AgregarReservacion([FromBody] Reservacion P_Entidad)
+        [Route("Crear")]
+        public IActionResult Crear([FromBody] Reservacion entidad)
         {
-            return _iReservacionLN.Agregar(P_Entidad);
-        }
-
-        [HttpDelete]
-        [Route(nameof(EliminarReservacion))]
-        public bool EliminarReservacion([FromHeader] string pCodigoReservacion)
-        {
-            return _iReservacionLN.Eliminar(new Reservacion { CodigoReservacion = pCodigoReservacion });
-        }
-
-        [HttpPut]
-        [Route(nameof(ModificarReservacion))]
-        public bool ModificarReservacion([FromHeader] string pCodigoReservacion, [FromBody] Reservacion P_Entidad)
-        {
-            return _iReservacionLN.Modificar(new Reservacion
+            try
             {
-                CodigoReservacion = pCodigoReservacion,
-                UsuarioId = P_Entidad.UsuarioId,
-                HabitacionId = P_Entidad.HabitacionId,
-                FechaEntrada = P_Entidad.FechaEntrada,
-                FechaSalida = P_Entidad.FechaSalida,
-                EstadoReservacionId = P_Entidad.EstadoReservacionId,
-                PrecioTotal = P_Entidad.PrecioTotal,
-                Observaciones = P_Entidad.Observaciones,
-                UsuarioCreacionId = P_Entidad.UsuarioCreacionId,
-                UsuarioModificacionId = P_Entidad.UsuarioModificacionId
-            });
-        }
-
-        [HttpGet]
-        [Route(nameof(ConsultarReservacion))]
-        public List<Reservacion> ConsultarReservacion([FromHeader] string pCodigoReservacion)
-        {
-            return _iReservacionLN.Consultar(new Reservacion
+                var resultado = _iReservacionLN.Crear(entidad);
+                return Ok(resultado);
+            }
+            catch (Exception ex)
             {
-                CodigoReservacion = string.IsNullOrEmpty(pCodigoReservacion.Replace("''", string.Empty)) ? string.Empty : pCodigoReservacion
-            });
-        }
-
-        [HttpPut]
-        [Route(nameof(CancelarReservacion))]
-        public bool CancelarReservacion([FromHeader] string pCodigoReservacion)
-        {
-            return _iReservacionLN.CancelarReservacion(pCodigoReservacion);
-        }
-
-        [HttpGet]
-        [Route(nameof(ConsultarReservacionesPorUsuario))]
-        public List<Reservacion> ConsultarReservacionesPorUsuario([FromHeader] int pUsuarioId)
-        {
-            return _iReservacionLN.ConsultarPorUsuario(pUsuarioId);
-        }
-
-        [HttpGet]
-        [Route(nameof(ConsultarReservacionesPorFecha))]
-        public List<Reservacion> ConsultarReservacionesPorFecha([FromHeader] DateTime pFechaInicio, [FromHeader] DateTime pFechaFin)
-        {
-            return _iReservacionLN.ConsultarPorFecha(pFechaInicio, pFechaFin);
-        }
-
-        [HttpGet]
-        [Route(nameof(CalcularCargoCancelacion))]
-        public decimal CalcularCargoCancelacion([FromHeader] string pCodigoReservacion)
-        {
-            return _iReservacionLN.CalcularCargoCancelacion(pCodigoReservacion);
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpPost]
-        [Route(nameof(CompletarCheckIn))]
-        public bool CompletarCheckIn([FromHeader] string pCodigoReservacion)
+        [Route("ProcesarPago")]
+        public IActionResult ProcesarPago([FromBody] Reservacion entidad)
         {
-            return _iReservacionLN.CompletarCheckIn(pCodigoReservacion);
+            try
+            {
+                var resultado = _iReservacionLN.ProcesarPago(entidad.ReservacionId, entidad.UsuarioId);
+                return Ok(resultado);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpPost]
-        [Route(nameof(CompletarCheckOut))]
-        public bool CompletarCheckOut([FromHeader] string pCodigoReservacion)
+        [Route("Cancelar")]
+        public IActionResult Cancelar([FromBody] Reservacion entidad)
         {
-            return _iReservacionLN.CompletarCheckOut(pCodigoReservacion);
+            try
+            {
+                var resultado = _iReservacionLN.Cancelar(entidad.ReservacionId, entidad.UsuarioId);
+                return Ok(resultado);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
+
+        [HttpGet]
+        [Route("ObtenerPorUsuario/{usuarioId}")]
+        public IActionResult ObtenerPorUsuario(int usuarioId)
+        {
+            try
+            {
+                var resultado = _iReservacionLN.ObtenerPorUsuario(usuarioId);
+                return Ok(resultado);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet]
+        [Route("ObtenerDisponibles")]
+        public IActionResult ObtenerDisponibles([FromQuery] DateTime fechaEntrada, [FromQuery] DateTime fechaSalida)
+        {
+            try
+            {
+                var resultado = _iReservacionLN.ObtenerDisponibles(fechaEntrada, fechaSalida);
+                return Ok(resultado);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        #endregion
     }
 }

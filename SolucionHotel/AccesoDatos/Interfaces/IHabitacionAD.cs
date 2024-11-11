@@ -1,16 +1,9 @@
 ﻿using Entidades.SQLServer;
 
-namespace AccesoDatos.Interfaces
+public interface IHabitacionAD
 {
-    public interface IHabitacionAD
-    {
-        bool Agregar(Habitacion P_Entidad);
-        bool Modificar(Habitacion P_Entidad);
-        bool Eliminar(Habitacion P_Entidad);
-        List<Habitacion> Consultar(Habitacion P_Entidad);
-        List<Habitacion> ObtenerDisponibles(DateTime pFechaEntrada, DateTime pFechaSalida);
-        List<TipoHabitacion> ObtenerTiposHabitacion();
-        List<Habitacion> ConsultarOcupacion(DateTime pFechaInicio, DateTime pFechaFin);
-        decimal ObtenerIngresos(DateTime pFechaInicio, DateTime pFechaFin);
-    }
+    Habitacion Crear(string numeroHabitacion, int tipoHabitacionId, int piso, string estado = "Disponible", string observaciones = null);
+    List<Habitacion> Obtener(int? habitacionId = null, string numeroHabitacion = null, int? tipoHabitacionId = null, string estado = null);
+    Habitacion Actualizar(int habitacionId, int tipoHabitacionId, int piso, string estado, string observaciones = null);
+    bool Eliminar(int habitacionId);
 }

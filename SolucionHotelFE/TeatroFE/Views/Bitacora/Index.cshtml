@@ -1,0 +1,66 @@
+﻿@model IEnumerable<HotelFE.Models.BitacoraModel>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Lista de bitácora</h1>
+<br />
+<br />
+<p>
+    <a asp-action="NuevoRegistro" asp-controller="Bitacora">Clic para hacer un nuevo registro en bitácora</a>
+</p>
+<br />
+<table class="table">
+    <thead>
+        <tr>
+            <th style="display:none">
+                @Html.DisplayNameFor(model => model.ID)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.FechaRegistro)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.UsuarioRegistro)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.AccesionRealizada)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ModuloSistema)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Descripcion)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td style="display:none">
+                @Html.DisplayFor(modelItem => item.ID)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.FechaRegistro)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.UsuarioRegistro)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.AccesionRealizada)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ModuloSistema)
+            </td>
+            <td style="width:100px;">
+                @Html.DisplayFor(modelItem => item.Descripcion)
+            </td>
+            <td>
+                @Html.ActionLink("Editar", "VerDatosParaEdicion", new { pId=item.ID }, new {@class = "btn btn-warning" }) |                
+                @Html.ActionLink("Borrar", "BorrarRegistro", new {  pId=item.ID }, new {@class = "btn btn-danger" })
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

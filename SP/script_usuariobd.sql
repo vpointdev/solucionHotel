@@ -1,9 +1,5 @@
 SELECT SERVERPROPERTY('IsIntegratedSecurityOnly');
--- Returns 1 if Windows Authentication only, 0 if Mixed Mode
 
--- If it returns 1, you need to enable Mixed Mode Authentication in SQL Server
-
--- Create login if it doesn't exist
 IF NOT EXISTS (SELECT * FROM sys.server_principals WHERE name = 'usr_Acceso')
 BEGIN
     CREATE LOGIN [usr_Acceso] WITH PASSWORD=N'12345678', 
@@ -13,7 +9,6 @@ BEGIN
 END
 GO
 
--- Create database user and grant permissions
 USE [Hotel]
 GO
 IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'usr_Acceso')

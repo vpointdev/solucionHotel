@@ -24,13 +24,6 @@ namespace WebApi.Controllers
             return View();
         }
 
-        [HttpPost]
-        [Route(nameof(AgregarBitacora))]
-        public bool AgregarBitacora([FromBody] Bitacora P_Entidad)
-        {
-            return _iBitacoraLN.Agregar(P_Entidad);
-        }
-
         [HttpGet]
         [Route(nameof(ListarBitacora))]
         public List<Bitacora> ListarBitacora()
@@ -38,11 +31,18 @@ namespace WebApi.Controllers
             return _iBitacoraLN.Listar();
         }
 
-        [HttpDelete]
-        [Route(nameof(EliminarBitacora))]
-        public bool EliminarBitacora([FromHeader] string pID)
+        [HttpPost]
+        [Route(nameof(AgregarBitacora))]
+        public bool AgregarBitacora([FromBody] Bitacora P_Entidad)
         {
-            return _iBitacoraLN.Eliminar(new Bitacora { ID = pID });
+            return _iBitacoraLN.Agregar(new Bitacora
+            {
+                FechaRegistro = P_Entidad.FechaRegistro,
+                UsuarioRegistro = P_Entidad.UsuarioRegistro,
+                AccesionRealizada = P_Entidad.AccesionRealizada,
+                ModuloSistema = P_Entidad.ModuloSistema,
+                Descripcion = P_Entidad.Descripcion
+            });
         }
 
         [HttpPut]
@@ -52,21 +52,33 @@ namespace WebApi.Controllers
             return _iBitacoraLN.Modificar(new Bitacora
             {
                 ID = pID,
-                Descripcion = P_Entidad.Descripcion,
                 FechaRegistro = P_Entidad.FechaRegistro,
+                UsuarioRegistro = P_Entidad.UsuarioRegistro,
+                AccesionRealizada = P_Entidad.AccesionRealizada,
                 ModuloSistema = P_Entidad.ModuloSistema,
-                UsuarioRegistro = P_Entidad.UsuarioRegistro
+                Descripcion = P_Entidad.Descripcion
             });
+        }
+
+        [HttpDelete]
+        [Route(nameof(EliminarBitacora))]
+        public bool EliminarBitacora([FromHeader] string pID)
+        {
+            return _iBitacoraLN.Eliminar(new Bitacora { ID = pID });
         }
 
         [HttpGet]
         [Route(nameof(ConsultarBitacora))]
-        public List<Bitacora> ConsultarBitacora([FromHeader] string pID, [FromHeader] string pUsuario, [FromHeader] string pAccesionRealizada)
+        public List<Bitacora> ConsultarBitacora(
+            [FromHeader] string pID,
+            [FromHeader] string pUsuario,
+            [FromHeader] string pAccesionRealizada)
         {
             return _iBitacoraLN.Consultar(new Bitacora
             {
                 ID = string.IsNullOrEmpty(pID.Replace("''", string.Empty)) ? string.Empty : pID,
                 UsuarioRegistro = string.IsNullOrEmpty(pUsuario.Replace("''", string.Empty)) ? string.Empty : pUsuario,
+                AccesionRealizada = string.IsNullOrEmpty(pAccesionRealizada.Replace("''", string.Empty)) ? string.Empty : pAccesionRealizada
             });
         }
     }

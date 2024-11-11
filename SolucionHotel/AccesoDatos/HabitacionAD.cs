@@ -2,129 +2,74 @@
 using Dapper;
 using Entidades.SQLServer;
 using Microsoft.Extensions.Configuration;
-using System.Data;
 using System.Data.SqlClient;
+using System.Data;
 
 namespace AccesoDatos
 {
     public class HabitacionAD : IHabitacionAD
     {
-        #region Atributos
         private readonly IConfiguration _iConfiguration;
-        #endregion
 
-        #region Constructor
         public HabitacionAD(IConfiguration iConfiguration)
         {
             _iConfiguration = iConfiguration;
         }
-        #endregion
 
-        #region Métodos Públicos
-        public bool Agregar(Habitacion P_Entidad)
+        public Habitacion Crear(string numeroHabitacion, int tipoHabitacionId, int piso, string estado = "Disponible", string observaciones = null)
         {
-            DynamicParameters parametros = new DynamicParameters();
+            DynamicParameters parameters = new DynamicParameters();
+            parameters.Add("@NumeroHabitacion", numeroHabitacion, DbType.String);
+            parameters.Add("@TipoHabitacionId", tipoHabitacionId, DbType.Int32);
+            parameters.Add("@Piso", piso, DbType.Int32);
+            parameters.Add("@Estado", estado, DbType.String);
+            parameters.Add("@Observaciones", observaciones, DbType.String);
 
-            parametros.Add("@NumeroHabitacion", P_Entidad.NumeroHabitacion, DbType.String, ParameterDirection.Input, 10);
-            parametros.Add("@TipoHabitacionId", P_Entidad.TipoHabitacionId, DbType.Int32, ParameterDirection.Input);
-            parametros.Add("@Piso", P_Entidad.Piso, DbType.Int32, ParameterDirection.Input);
-            parametros.Add("@Estado", P_Entidad.Estado, DbType.String, ParameterDirection.Input, 20);
-            parametros.Add("@Observaciones", P_Entidad.Observaciones, DbType.String, ParameterDirection.Input, 500);
-            parametros.Add("@UsuarioCreacionId", P_Entidad.UsuarioCreacionId, DbType.Int32, ParameterDirection.Input);
-
-            using (var conexionSQL = new SqlConnection(_iConfiguration.GetConnectionString("ConexionSQLServer")))
+            using (var connection = new SqlConnection(_iConfiguration.GetConnectionString("ConexionSQLServer")))
             {
-                return conexionSQL.Execute("PA_Habitacion_Crear", parametros, commandType: CommandType.StoredProcedure) > 0;
+                return connection.QuerySingle<Habitacion>("PA_Habitacion_Crear", parameters, commandType: CommandType.StoredProcedure);
             }
         }
 
-        public bool Modificar(Habitacion P_Entidad)
+        public List<Habitacion> Obtener(int? habitacionId = null, string numeroHabitacion = null, int? tipoHabitacionId = null, string estado = null)
         {
-            DynamicParameters parametros = new DynamicParameters();
+            DynamicParameters parameters = new DynamicParameters();
+            parameters.Add("@HabitacionId", habitacionId, DbType.Int32);
+            parameters.Add("@NumeroHabitacion", numeroHabitacion, DbType.String);
+            parameters.Add("@TipoHabitacionId", tipoHabitacionId, DbType.Int32);
+            parameters.Add("@Estado", estado, DbType.String);
 
-            parametros.Add("@NumeroHabitacion", P_Entidad.NumeroHabitacion, DbType.String, ParameterDirection.Input, 10);
-            parametros.Add("@TipoHabitacionId", P_Entidad.TipoHabitacionId, DbType.Int32, ParameterDirection.Input);
-            parametros.Add("@Piso", P_Entidad.Piso, DbType.Int32, ParameterDirection.Input);
-            parametros.Add("@Estado", P_Entidad.Estado, DbType.String, ParameterDirection.Input, 20);
-            parametros.Add("@Observaciones", P_Entidad.Observaciones, DbType.String, ParameterDirection.Input, 500);
-            parametros.Add("@UsuarioModificacionId", P_Entidad.UsuarioModificacionId, DbType.Int32, ParameterDirection.Input);
-
-            using (var conexionSQL = new SqlConnection(_iConfiguration.GetConnectionString("ConexionSQLServer")))
+            using (var connection = new SqlConnection(_iConfiguration.GetConnectionString("ConexionSQLServer")))
             {
-                return conexionSQL.Execute("PA_Habitacion_Actualizar", parametros, commandType: CommandType.StoredProcedure) > 0;
+                return connection.Query<Habitacion>("PA_Habitacion_Obtener", parameters, commandType: CommandType.StoredProcedure).ToList();
             }
         }
 
-        public bool Eliminar(Habitacion P_Entidad)
+        public Habitacion Actualizar(int habitacionId, int tipoHabitacionId, int piso, string estado, string observaciones = null)
         {
-            DynamicParameters parametros = new DynamicParameters();
+            DynamicParameters parameters = new DynamicParameters();
+            parameters.Add("@HabitacionId", habitacionId, DbType.Int32);
+            parameters.Add("@TipoHabitacionId", tipoHabitacionId, DbType.Int32);
+            parameters.Add("@Piso", piso, DbType.Int32);
+            parameters.Add("@Estado", estado, DbType.String);
+            parameters.Add("@Observaciones", observaciones, DbType.String);
 
-            parametros.Add("@NumeroHabitacion", P_Entidad.NumeroHabitacion, DbType.String, ParameterDirection.Input, 10);
-
-            using (var conexionSQL = new SqlConnection(_iConfiguration.GetConnectionString("ConexionSQLServer")))
+            using (var connection = new SqlConnection(_iConfiguration.GetConnectionString("ConexionSQLServer")))
             {
-                return conexionSQL.Execute("PA_Habitacion_Eliminar", parametros, commandType: CommandType.StoredProcedure) > 0;
+                return connection.QuerySingle<Habitacion>("PA_Habitacion_Actualizar", parameters, commandType: CommandType.StoredProcedure);
             }
         }
 
-        public List<Habitacion> Consultar(Habitacion P_Entidad)
+        public bool Eliminar(int habitacionId)
         {
-            DynamicParameters parametros = new DynamicParameters();
+            DynamicParameters parameters = new DynamicParameters();
+            parameters.Add("@HabitacionId", habitacionId, DbType.Int32);
 
-            parametros.Add("@NumeroHabitacion", P_Entidad.NumeroHabitacion, DbType.String, ParameterDirection.Input, 10);
-
-            using (var conexionSQL = new SqlConnection(_iConfiguration.GetConnectionString("ConexionSQLServer")))
+            using (var connection = new SqlConnection(_iConfiguration.GetConnectionString("ConexionSQLServer")))
             {
-                return (List<Habitacion>)conexionSQL.Query<Habitacion>("PA_Habitacion_ObtenerPorId", parametros, commandType: CommandType.StoredProcedure);
+                connection.Execute("PA_Habitacion_Eliminar", parameters, commandType: CommandType.StoredProcedure);
+                return true;
             }
         }
-
-        public List<Habitacion> ObtenerDisponibles(DateTime pFechaEntrada, DateTime pFechaSalida)
-        {
-            DynamicParameters parametros = new DynamicParameters();
-
-            parametros.Add("@FechaEntrada", pFechaEntrada, DbType.DateTime, ParameterDirection.Input);
-            parametros.Add("@FechaSalida", pFechaSalida, DbType.DateTime, ParameterDirection.Input);
-
-            using (var conexionSQL = new SqlConnection(_iConfiguration.GetConnectionString("ConexionSQLServer")))
-            {
-                return (List<Habitacion>)conexionSQL.Query<Habitacion>("PA_Habitacion_ObtenerDisponibles", parametros, commandType: CommandType.StoredProcedure);
-            }
-        }
-
-        public List<TipoHabitacion> ObtenerTiposHabitacion()
-        {
-            using (var conexionSQL = new SqlConnection(_iConfiguration.GetConnectionString("ConexionSQLServer")))
-            {
-                return (List<TipoHabitacion>)conexionSQL.Query<TipoHabitacion>("PA_TipoHabitacion_ObtenerTodos", commandType: CommandType.StoredProcedure);
-            }
-        }
-
-        public List<Habitacion> ConsultarOcupacion(DateTime pFechaInicio, DateTime pFechaFin)
-        {
-            DynamicParameters parametros = new DynamicParameters();
-
-            parametros.Add("@FechaInicio", pFechaInicio, DbType.DateTime, ParameterDirection.Input);
-            parametros.Add("@FechaFin", pFechaFin, DbType.DateTime, ParameterDirection.Input);
-
-            using (var conexionSQL = new SqlConnection(_iConfiguration.GetConnectionString("ConexionSQLServer")))
-            {
-                return (List<Habitacion>)conexionSQL.Query<Habitacion>("PA_Habitacion_ConsultarOcupacion", parametros, commandType: CommandType.StoredProcedure);
-            }
-        }
-
-        public decimal ObtenerIngresos(DateTime pFechaInicio, DateTime pFechaFin)
-        {
-            DynamicParameters parametros = new DynamicParameters();
-
-            parametros.Add("@FechaInicio", pFechaInicio, DbType.DateTime, ParameterDirection.Input);
-            parametros.Add("@FechaFin", pFechaFin, DbType.DateTime, ParameterDirection.Input);
-
-            using (var conexionSQL = new SqlConnection(_iConfiguration.GetConnectionString("ConexionSQLServer")))
-            {
-                return conexionSQL.ExecuteScalar<decimal>("PA_Habitacion_ObtenerIngresos", parametros, commandType: CommandType.StoredProcedure);
-            }
-        }
-        #endregion
     }
 }

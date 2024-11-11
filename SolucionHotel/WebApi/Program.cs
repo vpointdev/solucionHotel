@@ -15,19 +15,18 @@ builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnC
 builder.Services.AddTransient<IBitacoraAD, BitacoraAD>();
 builder.Services.AddTransient<IUsuarioAD, UsuarioAD>();
 builder.Services.AddTransient<IHabitacionAD, HabitacionAD>();
+builder.Services.AddTransient<ITipoHabitacionAD, TipoHabitacionAD>();
 builder.Services.AddTransient<IReservacionAD, ReservacionAD>();
-builder.Services.AddTransient<IPagoAD, PagoAD>();
 
 // Inyecciones de capa de negocio
 builder.Services.AddTransient<IBitacoraLN, BitacoraLN>();
 builder.Services.AddTransient<IUsuarioLN, UsuarioLN>();
 builder.Services.AddTransient<IHabitacionLN, HabitacionLN>();
+builder.Services.AddTransient<ITipoHabitacionLN, TipoHabitacionLN>();
 builder.Services.AddTransient<IReservacionLN, ReservacionLN>();
-builder.Services.AddTransient<IPagoLN, PagoLN>();
 
 builder.Services.AddSingleton(builder.Configuration.GetSection("ConnectionStrings"));
 
-// Change this line to support both API and Views
 builder.Services.AddControllersWithViews();
 
 builder.Services.AddEndpointsApiExplorer();
@@ -41,15 +40,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// Add these middleware components for MVC to work properly
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthorization();
 
-// Add both MVC and API routing
-//app.MapControllerRoute(
-//    name: "default",
-//    pattern: "{controller=Home}/{action=Index}/{id?}");
 app.MapControllers();
 
 app.Run();
