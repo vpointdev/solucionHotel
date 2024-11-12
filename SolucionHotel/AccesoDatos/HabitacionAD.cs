@@ -2,74 +2,71 @@
 using Dapper;
 using Entidades.SQLServer;
 using Microsoft.Extensions.Configuration;
-using System.Data.SqlClient;
 using System.Data;
+using System.Data.SqlClient;
 
 namespace AccesoDatos
 {
     public class HabitacionAD : IHabitacionAD
     {
-        private readonly IConfiguration _iConfiguration;
+        private readonly IConfiguration _configuration;
 
-        public HabitacionAD(IConfiguration iConfiguration)
+        public HabitacionAD(IConfiguration configuration)
         {
-            _iConfiguration = iConfiguration;
+            _configuration = configuration;
         }
 
-        public Habitacion Crear(string numeroHabitacion, int tipoHabitacionId, int piso, string estado = "Disponible", string observaciones = null)
+        public bool Agregar(Habitacion habitacion)
         {
-            DynamicParameters parameters = new DynamicParameters();
-            parameters.Add("@NumeroHabitacion", numeroHabitacion, DbType.String);
-            parameters.Add("@TipoHabitacionId", tipoHabitacionId, DbType.Int32);
-            parameters.Add("@Piso", piso, DbType.Int32);
-            parameters.Add("@Estado", estado, DbType.String);
-            parameters.Add("@Observaciones", observaciones, DbType.String);
+            var parametros = new DynamicParameters();
+            parametros.Add("@NumeroHabitacion", habitacion.NumeroHabitacion, DbType.String);
+            parametros.Add("@TipoHabitacionId", habitacion.TipoHabitacionId, DbType.Int32);
+            parametros.Add("@Piso", habitacion.Piso, DbType.Int32);
+            parametros.Add("@Observaciones", habitacion.Observaciones, DbType.String);
 
-            using (var connection = new SqlConnection(_iConfiguration.GetConnectionString("ConexionSQLServer")))
-            {
-                return connection.QuerySingle<Habitacion>("PA_Habitacion_Crear", parameters, commandType: CommandType.StoredProcedure);
-            }
+            using var conexion = new SqlConnection(_configuration.GetConnectionString("ConexionSQLServer"));
+            return conexion.Execute("PA_Habitacion_Crear", parametros,
+                commandType: CommandType.StoredProcedure) > 0;
         }
 
-        public List<Habitacion> Obtener(int? habitacionId = null, string numeroHabitacion = null, int? tipoHabitacionId = null, string estado = null)
+        public bool Modificar(Habitacion habitacion)
         {
-            DynamicParameters parameters = new DynamicParameters();
-            parameters.Add("@HabitacionId", habitacionId, DbType.Int32);
-            parameters.Add("@NumeroHabitacion", numeroHabitacion, DbType.String);
-            parameters.Add("@TipoHabitacionId", tipoHabitacionId, DbType.Int32);
-            parameters.Add("@Estado", estado, DbType.String);
+            var parametros = new DynamicParameters();
+            parametros.Add("@HabitacionId", habitacion.HabitacionId, DbType.Int32);
+            parametros.Add("@NumeroHabitacion", habitacion.NumeroHabitacion, DbType.String);
+            parametros.Add("@TipoHabitacionId", habitacion.TipoHabitacionId, DbType.Int32);
+            parametros.Add("@Piso", habitacion.Piso, DbType.Int32);
+            parametros.Add("@Estado", habitacion.Estado, DbType.String);
+            parametros.Add("@Observaciones", habitacion.Observaciones, DbType.String);
+            parametros.Add("@Activo", habitacion.Activo, DbType.Boolean);
 
-            using (var connection = new SqlConnection(_iConfiguration.GetConnectionString("ConexionSQLServer")))
-            {
-                return connection.Query<Habitacion>("PA_Habitacion_Obtener", parameters, commandType: CommandType.StoredProcedure).ToList();
-            }
-        }
-
-        public Habitacion Actualizar(int habitacionId, int tipoHabitacionId, int piso, string estado, string observaciones = null)
-        {
-            DynamicParameters parameters = new DynamicParameters();
-            parameters.Add("@HabitacionId", habitacionId, DbType.Int32);
-            parameters.Add("@TipoHabitacionId", tipoHabitacionId, DbType.Int32);
-            parameters.Add("@Piso", piso, DbType.Int32);
-            parameters.Add("@Estado", estado, DbType.String);
-            parameters.Add("@Observaciones", observaciones, DbType.String);
-
-            using (var connection = new SqlConnection(_iConfiguration.GetConnectionString("ConexionSQLServer")))
-            {
-                return connection.QuerySingle<Habitacion>("PA_Habitacion_Actualizar", parameters, commandType: CommandType.StoredProcedure);
-            }
+            using var conexion = new SqlConnection(_configuration.GetConnectionString("ConexionSQLServer"));
+            return conexion.Execute("PA_Habitacion_Actualizar", parametros,
+                commandType: CommandType.StoredProcedure) > 0;
         }
 
         public bool Eliminar(int habitacionId)
         {
-            DynamicParameters parameters = new DynamicParameters();
-            parameters.Add("@HabitacionId", habitacionId, DbType.Int32);
+            var parametros = new DynamicParameters();
+            parametros.Add("@HabitacionId", habitacionId, DbType.Int32);
 
-            using (var connection = new SqlConnection(_iConfiguration.GetConnectionString("ConexionSQLServer")))
-            {
-                connection.Execute("PA_Habitacion_Eliminar", parameters, commandType: CommandType.StoredProcedure);
-                return true;
-            }
+            using var conexion = new SqlConnection(_configuration.GetConnectionString("ConexionSQLServer"));
+            return conexion.Execute("PA_Habitacion_Eliminar", parametros,
+                commandType: CommandType.StoredProcedure) > 0;
+        }
+
+        public List<Habitacion> ObtenerTodos()
+        {
+            using var conexion = new SqlConnection(_configuration.GetConnectionString("ConexionSQLServer"));
+            return conexion.Query<Habitacion>("PA_Habitacion_ObtenerTodos",
+                commandType: CommandType.StoredProcedure).ToList();
+        }
+
+        public List<TipoHabitacion> ObtenerTiposHabitacion()
+        {
+            using var conexion = new SqlConnection(_configuration.GetConnectionString("ConexionSQLServer"));
+            return conexion.Query<TipoHabitacion>("PA_TipoHabitacion_ObtenerTodos",
+                commandType: CommandType.StoredProcedure).ToList();
         }
     }
 }

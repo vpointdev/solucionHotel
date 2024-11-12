@@ -25,11 +25,9 @@ namespace AccesoDatos
         {
             DynamicParameters parametros = new DynamicParameters();
 
-            parametros.Add("@Usuario", P_Entidad.NombreUsuario, DbType.String, ParameterDirection.Input, 20);
-            parametros.Add("@Password", P_Entidad.Clave, DbType.String, ParameterDirection.Input, 15);
-            parametros.Add("@Fecha", P_Entidad.FechaRegistro, DbType.DateTime, ParameterDirection.Input);
-            parametros.Add("@Correo", P_Entidad.CorreoRegistro, DbType.String, ParameterDirection.Input, 100);
-            parametros.Add("@Estado", P_Entidad.Estado, DbType.Boolean, ParameterDirection.Input);
+            parametros.Add("@NombreUsuario", P_Entidad.NombreUsuario, DbType.String, ParameterDirection.Input, 50);
+            parametros.Add("@Clave", P_Entidad.Clave, DbType.String, ParameterDirection.Input, 50);
+            parametros.Add("@CorreoRegistro", P_Entidad.CorreoRegistro, DbType.String, ParameterDirection.Input, 100);
 
             using (var conexionSQL = new SqlConnection(_iConfiguration.GetConnectionString("ConexionSQLServer")))
             {
@@ -41,10 +39,10 @@ namespace AccesoDatos
         {
             DynamicParameters parametros = new DynamicParameters();
 
-            parametros.Add("@Usuario", P_Entidad.NombreUsuario, DbType.String, ParameterDirection.Input, 20);
-            parametros.Add("@Pass", P_Entidad.Clave, DbType.String, ParameterDirection.Input, 15);
-            parametros.Add("@Fecha", P_Entidad.FechaRegistro, DbType.DateTime, ParameterDirection.Input);
-            parametros.Add("@Correo", P_Entidad.CorreoRegistro, DbType.String, ParameterDirection.Input, 100);
+            parametros.Add("@UsuarioId", P_Entidad.UsuarioId, DbType.Int32, ParameterDirection.Input);
+            parametros.Add("@NombreUsuario", P_Entidad.NombreUsuario, DbType.String, ParameterDirection.Input, 50);
+            parametros.Add("@Clave", P_Entidad.Clave, DbType.String, ParameterDirection.Input, 50);
+            parametros.Add("@CorreoRegistro", P_Entidad.CorreoRegistro, DbType.String, ParameterDirection.Input, 100);
             parametros.Add("@Estado", P_Entidad.Estado, DbType.Boolean, ParameterDirection.Input);
 
             using (var conexionSQL = new SqlConnection(_iConfiguration.GetConnectionString("ConexionSQLServer")))
@@ -57,7 +55,7 @@ namespace AccesoDatos
         {
             DynamicParameters parametros = new DynamicParameters();
 
-            parametros.Add("@Usuario", P_Entidad.NombreUsuario, DbType.String, ParameterDirection.Input, 20);
+            parametros.Add("@UsuarioId", P_Entidad.UsuarioId, DbType.Int32, ParameterDirection.Input);
 
             using (var conexionSQL = new SqlConnection(_iConfiguration.GetConnectionString("ConexionSQLServer")))
             {
@@ -69,35 +67,24 @@ namespace AccesoDatos
         {
             DynamicParameters parametros = new DynamicParameters();
 
-            parametros.Add("@Usuario", P_Entidad.NombreUsuario, DbType.String, ParameterDirection.Input, 20);
+            parametros.Add("@UsuarioId", P_Entidad.UsuarioId, DbType.Int32, ParameterDirection.Input);
 
             using (var conexionSQL = new SqlConnection(_iConfiguration.GetConnectionString("ConexionSQLServer")))
             {
-                return (List<Usuario>)conexionSQL.Query<Usuario>("PA_Usuario_ObtenerPorId", parametros, commandType: CommandType.StoredProcedure);
+                return conexionSQL.Query<Usuario>("PA_Usuario_ObtenerPorId", parametros, commandType: CommandType.StoredProcedure).ToList();
             }
         }
 
         public List<Perfil> PerfilesUsuario(Usuario P_Entidad)
         {
-            try
-            {
-                DynamicParameters parametros = new DynamicParameters();
-                parametros.Add("@Usuario", P_Entidad.NombreUsuario, DbType.String, ParameterDirection.Input, 20);
+            DynamicParameters parametros = new DynamicParameters();
 
-                using (var conexionSQL = new SqlConnection(_iConfiguration.GetConnectionString("ConexionSQLServer")))
-                {
-                    var perfiles = conexionSQL.Query<Perfil>("PA_Usuario_ObtenerPerfiles",
-                        parametros,
-                        commandType: CommandType.StoredProcedure).ToList();
+            parametros.Add("@NombreUsuario", P_Entidad.NombreUsuario, DbType.String, ParameterDirection.Input, 50);
 
-                                       return perfiles;
-                }
-            }
-            catch (Exception ex)
+            using (var conexionSQL = new SqlConnection(_iConfiguration.GetConnectionString("ConexionSQLServer")))
             {
-                // Debug: Capturar cualquier error
-                System.Diagnostics.Debug.WriteLine($"Error en PerfilesUsuario: {ex.Message}");
-                throw;
+                var result = conexionSQL.Query<Perfil>("PA_Usuario_ObtenerPerfiles", parametros, commandType: CommandType.StoredProcedure).ToList();
+                return result;
             }
         }
 
@@ -105,12 +92,21 @@ namespace AccesoDatos
         {
             DynamicParameters parametros = new DynamicParameters();
 
-            parametros.Add("@Usuario", P_Entidad.NombreUsuario, DbType.String, ParameterDirection.Input, 20);
-            parametros.Add("@Clave", P_Entidad.Clave, DbType.String, ParameterDirection.Input, 15);
+            parametros.Add("@NombreUsuario", P_Entidad.NombreUsuario, DbType.String, ParameterDirection.Input, 50);
+            parametros.Add("@Clave", P_Entidad.Clave, DbType.String, ParameterDirection.Input, 50);
 
             using (var conexionSQL = new SqlConnection(_iConfiguration.GetConnectionString("ConexionSQLServer")))
             {
-                return ((List<Usuario>)conexionSQL.Query<Usuario>("PA_Usuario_Autenticar", parametros, commandType: CommandType.StoredProcedure)).Count > 0;
+                var result = conexionSQL.Query<Usuario>("PA_Usuario_Autenticar", parametros, commandType: CommandType.StoredProcedure).ToList();
+                return result.Count > 0;
+            }
+        }
+
+        public List<Usuario> ObtenerTodos()
+        {
+            using (var conexionSQL = new SqlConnection(_iConfiguration.GetConnectionString("ConexionSQLServer")))
+            {
+                return conexionSQL.Query<Usuario>("PA_Usuario_ObtenerTodos", commandType: CommandType.StoredProcedure).ToList();
             }
         }
         #endregion

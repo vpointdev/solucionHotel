@@ -6,7 +6,7 @@ namespace WebApi.Controllers
 {
     [ApiController]
     [Route("api/Usuario")]
-    public class UsuarioController : Controller
+    public class UsuarioController : ControllerBase
     {
         #region Atributos
         private readonly IUsuarioLN _iUsuarioLN;
@@ -18,11 +18,6 @@ namespace WebApi.Controllers
             _iUsuarioLN = iUsuarioLN;
         }
         #endregion
-
-        public IActionResult Index()
-        {
-            return View();
-        }
 
         [HttpPost]
         [Route(nameof(AgregarUsuario))]
@@ -47,8 +42,8 @@ namespace WebApi.Controllers
                 NombreUsuario = pUsuario,
                 Clave = P_Entidad.Clave,
                 FechaRegistro = P_Entidad.FechaRegistro,
-                CorreoRegistro = P_Entidad.CorreoRegistro,
-                Estado = P_Entidad.Estado
+                Estado = P_Entidad.Estado,
+                CorreoRegistro = P_Entidad.CorreoRegistro
             });
         }
 

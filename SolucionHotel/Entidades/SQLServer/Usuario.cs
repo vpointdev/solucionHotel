@@ -12,7 +12,7 @@ namespace Entidades.SQLServer
         public DateTime FechaRegistro { get; set; }
         public string CorreoRegistro { get; set; }
         public bool Estado { get; set; }
-        public List<Perfil> Perfil { get; set; }
+       
         #endregion
 
         #region Constructor
@@ -24,7 +24,6 @@ namespace Entidades.SQLServer
             FechaRegistro = DateTime.Now;
             CorreoRegistro = string.Empty;
             Estado = true;
-            Perfil = new List<Perfil>();
         }
         #endregion
     }

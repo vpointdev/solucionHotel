@@ -15,14 +15,12 @@ builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnC
 builder.Services.AddTransient<IBitacoraAD, BitacoraAD>();
 builder.Services.AddTransient<IUsuarioAD, UsuarioAD>();
 builder.Services.AddTransient<IHabitacionAD, HabitacionAD>();
-builder.Services.AddTransient<ITipoHabitacionAD, TipoHabitacionAD>();
 builder.Services.AddTransient<IReservacionAD, ReservacionAD>();
 
 // Inyecciones de capa de negocio
 builder.Services.AddTransient<IBitacoraLN, BitacoraLN>();
 builder.Services.AddTransient<IUsuarioLN, UsuarioLN>();
 builder.Services.AddTransient<IHabitacionLN, HabitacionLN>();
-builder.Services.AddTransient<ITipoHabitacionLN, TipoHabitacionLN>();
 builder.Services.AddTransient<IReservacionLN, ReservacionLN>();
 
 builder.Services.AddSingleton(builder.Configuration.GetSection("ConnectionStrings"));

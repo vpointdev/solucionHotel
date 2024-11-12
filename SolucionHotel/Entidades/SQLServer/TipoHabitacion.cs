@@ -7,6 +7,7 @@
     public decimal PrecioBase { get; set; }
     public int Capacidad { get; set; }
     public bool Activo { get; set; }
+    public DateTime FechaCreacion { get; set; }
     #endregion
 
     #region Constructor
@@ -18,6 +19,7 @@
         PrecioBase = 0;
         Capacidad = 0;
         Activo = true;
+        FechaCreacion = DateTime.MinValue;
     }
     #endregion
 }

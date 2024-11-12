@@ -1,0 +1,66 @@
+﻿@model IEnumerable<HotelFE.Models.BitacoraModel>
+@{
+    ViewData["Title"] = "Bitácora del Sistema";
+}
+
+<div class="container-fluid mt-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h2">Lista de Bitácora</h1>
+        </div>
+        <div class="col text-end">
+            <a asp-action="NuevoRegistro" asp-controller="Bitacora" class="btn btn-primary">
+                Nuevo Registro
+            </a>
+        </div>
+    </div>
+
+    <!-- Table Section -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped">
+                    <thead class="table-light">
+                        <tr>
+                            <th>@Html.DisplayNameFor(model => model.FechaRegistro)</th>
+                            <th>@Html.DisplayNameFor(model => model.UsuarioRegistro)</th>
+                            <th>@Html.DisplayNameFor(model => model.AccesionRealizada)</th>
+                            <th>@Html.DisplayNameFor(model => model.ModuloSistema)</th>
+                            <th>@Html.DisplayNameFor(model => model.Descripcion)</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.FechaRegistro.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>
+                                    <span class="badge bg-secondary">@item.UsuarioRegistro</span>
+                                </td>
+                                <td>@item.AccesionRealizada</td>
+                                <td>@item.ModuloSistema</td>
+                                <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis;">
+                                    @item.Descripcion
+                                </td>
+                                <td class="text-center">
+                                    <a asp-action="VerDatosParaEdicion"
+                                       asp-route-pId="@item.ID"
+                                       class="btn btn-warning btn-sm me-2">
+                                        Editar
+                                    </a>
+                                    <a asp-action="BorrarRegistro"
+                                       asp-route-pId="@item.ID"
+                                       class="btn btn-danger btn-sm">
+                                        Borrar
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

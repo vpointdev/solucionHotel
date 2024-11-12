@@ -8,6 +8,8 @@ namespace AccesoDatos.Interfaces
         bool Modificar(Usuario P_Entidad);
         bool Eliminar(Usuario P_Entidad);
         List<Usuario> Consultar(Usuario P_Entidad);
+        List<Usuario> ObtenerTodos();
+
         List<Perfil> PerfilesUsuario(Usuario P_Entidad);
         bool Autenticacion(Usuario P_Entidad);
     }

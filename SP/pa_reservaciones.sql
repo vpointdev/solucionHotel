@@ -52,6 +52,7 @@ BEGIN
             FROM Reservacion r
             WHERE r.HabitacionId = @HabitacionId
             AND r.Estado IN ('Confirmada', 'Pendiente')
+
             AND (
                 @FechaEntrada BETWEEN r.FechaEntrada AND r.FechaSalida
                 OR @FechaSalida BETWEEN r.FechaEntrada AND r.FechaSalida

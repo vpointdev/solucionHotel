@@ -70,15 +70,11 @@ namespace WebApi.Controllers
         [HttpGet]
         [Route(nameof(ConsultarBitacora))]
         public List<Bitacora> ConsultarBitacora(
-            [FromHeader] string pID,
-            [FromHeader] string pUsuario,
-            [FromHeader] string pAccesionRealizada)
+            [FromHeader] string pID)
         {
             return _iBitacoraLN.Consultar(new Bitacora
             {
-                ID = string.IsNullOrEmpty(pID.Replace("''", string.Empty)) ? string.Empty : pID,
-                UsuarioRegistro = string.IsNullOrEmpty(pUsuario.Replace("''", string.Empty)) ? string.Empty : pUsuario,
-                AccesionRealizada = string.IsNullOrEmpty(pAccesionRealizada.Replace("''", string.Empty)) ? string.Empty : pAccesionRealizada
+                ID = string.IsNullOrEmpty(pID.Replace("''", string.Empty)) ? string.Empty : pID
             });
         }
     }

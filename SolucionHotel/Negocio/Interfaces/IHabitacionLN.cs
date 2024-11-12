@@ -4,9 +4,10 @@ namespace Negocio.Interfaces
 {
     public interface IHabitacionLN
     {
-        Habitacion Crear(Habitacion entidad);
-        List<Habitacion> Obtener(int? habitacionId = null, string numeroHabitacion = null, int? tipoHabitacionId = null, string estado = null);
-        Habitacion Actualizar(Habitacion entidad);
+        bool Agregar(Habitacion habitacion);
+        bool Modificar(Habitacion habitacion);
         bool Eliminar(int habitacionId);
+        List<Habitacion> ObtenerTodos();
+        List<TipoHabitacion> ObtenerTiposHabitacion();
     }
 }

@@ -1,0 +1,86 @@
+﻿@model UsuarioModel
+@{
+
+    ViewData
+[
+"Title"
+]
+ 
+=
+ 
+"Crear Usuario"
+;
+
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-user-plus text-primary fs-1"></i>
+                        <h4 class="mt-2">Crear Usuario</h4>
+                    </div>
+                    <form asp-action="Crear" method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="mb-3">
+                            <label asp-for="NombreUsuario" class="form-label">
+                                <i class="fas fa-user me-1"></i>Usuario:
+                            </label>
+                            <input asp-for="NombreUsuario" class="form-control" maxlength="50"
+                                   placeholder="Nombre de usuario" required />
+                            <span asp-validation-for="NombreUsuario" class="text-danger"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="CorreoRegistro" class="form-label">
+                                <i class="fas fa-envelope me-1"></i>Correo:
+                            </label>
+                            <input asp-for="CorreoRegistro" type="email" class="form-control"
+                                   placeholder="correo@ejemplo.com" required />
+                            <span asp-validation-for="CorreoRegistro" class="text-danger"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="Clave" class="form-label">
+                                <i class="fas fa-lock me-1"></i>Contraseña:
+                            </label>
+                            <input asp-for="Clave" type="password" class="form-control" maxlength="50"
+                                   placeholder="Contraseña" required />
+                            <span asp-validation-for="Clave" class="text-danger"></span>
+                        </div>
+                        <div class="mb-4">
+                            <label for="ConfirmarClave" class="form-label">
+                                <i class="fas fa-lock me-1"></i>Confirmar Contraseña:
+                            </label>
+                            <input type="password" class="form-control" maxlength="50"
+                                   placeholder="Confirmar contraseña" name="ConfirmarClave" 
+                                   data-val="true" 
+                                   data-val-equalto="Las contraseñas no coinciden" 
+                                   data-val-equalto-other="Clave" required />
+                            <span class="text-danger field-validation-valid" 
+                                  data-valmsg-for="ConfirmarClave" 
+                                  data-valmsg-replace="true"></span>
+                        </div>
+                        
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Guardar Usuario
+                            </button>
+                            <a asp-action="Index" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Volver al Listado
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

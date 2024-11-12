@@ -1,0 +1,175 @@
+﻿@model IEnumerable<HotelFE.Models.HabitacionModel>
+@{
+    ViewData["Title"] = "Habitaciones";
+    var tiposHabitacion = ViewBag.TiposHabitacion as List<TipoHabitacionModel>;
+}
+
+<div class="container-fluid mt-4">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3">
+                <i class="fas fa-bed me-2"></i>Gestión de Habitaciones
+            </h1>
+            <p class="text-muted mb-0">Administre las habitaciones del hotel</p>
+        </div>
+        <div>
+            <a asp-action="Crear" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Nueva Habitación
+            </a>
+        </div>
+    </div>
+
+    <!-- Rooms Grid -->
+    <div class="row g-4">
+        @if (!Model.Any())
+        {
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <i class="fas fa-bed fa-3x text-muted mb-3"></i>
+                    <h5>No hay habitaciones registradas</h5>
+                    <p class="text-muted">
+                        Comience agregando una nueva habitación usando el botón "Nueva Habitación"
+                    </p>
+                </div>
+            </div>
+        }
+        else
+        {
+            foreach (var habitacion in Model)
+            {
+                var tipoHabitacion = tiposHabitacion.FirstOrDefault(t => t.TipoHabitacionId == habitacion.TipoHabitacionId);
+
+                <div class="col-xl-3 col-lg-4 col-md-6">
+                    <div class="card shadow-sm h-100">
+                        <!-- Room Header -->
+                        <div class="card-header bg-transparent border-bottom-0">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-door-closed me-2"></i>
+                                    Habitación @habitacion.NumeroHabitacion
+                                </h5>
+                                @{
+                                    string badgeClass = habitacion.Estado switch
+                                    {
+                                        "Disponible" => "bg-success",
+                                        "Ocupada" => "bg-danger",
+                                        "Mantenimiento" => "bg-warning text-dark",
+                                        _ => "bg-secondary"
+                                    };
+                                }
+                                <span class="badge @badgeClass">
+                                    <i class="fas fa-circle me-1"></i>@habitacion.Estado
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Room Details -->
+                        <div class="card-body">
+                            <!-- Tipo Habitación -->
+                            <div class="mb-3 bg-light rounded p-2">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-tag text-primary me-2"></i>
+                                    <div>
+                                        <small class="text-muted d-block">Tipo de Habitación</small>
+                                        <span class="fw-bold">@(tipoHabitacion?.Nombre ?? "No definido")</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Detalles Grid -->
+                            <div class="row g-2">
+                                <!-- Piso -->
+                                <div class="col-6">
+                                    <div class="bg-light rounded p-2">
+                                        <small class="text-muted d-block">Piso</small>
+                                        <span class="fw-bold">@habitacion.Piso</span>
+                                    </div>
+                                </div>
+
+                                <!-- Capacidad -->
+                                <div class="col-6">
+                                    <div class="bg-light rounded p-2">
+                                        <small class="text-muted d-block">Capacidad</small>
+                                        <span class="fw-bold">
+                                            <i class="fas fa-user me-1"></i>
+                                            @(tipoHabitacion?.Capacidad ?? 0)
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- Precio -->
+                                <div class="col-12">
+                                    <div class="bg-light rounded p-2">
+                                        <small class="text-muted d-block">Precio Base</small>
+                                        <span class="fw-bold text-primary">
+                                            <i class="fas fa-dollar-sign me-1"></i>
+                                            @(tipoHabitacion?.PrecioBase.ToString("N2") ?? "0.00")
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(habitacion.Observaciones))
+                            {
+                                <div class="mt-3">
+                                    <small class="text-muted d-block">Observaciones</small>
+                                    <p class="small mb-0 fst-italic">@habitacion.Observaciones</p>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Actions Footer -->
+                        <div class="card-footer bg-transparent">
+                            <div class="btn-group w-100">
+                                <!-- Edit Button -->
+                                <a asp-action="Editar" asp-route-id="@habitacion.HabitacionId"
+                                   class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-edit me-1"></i>Editar
+                                </a>
+
+                                <!-- Status Button -->
+                                <div class="btn-group">
+                                    <button type="button"
+                                            class="btn btn-outline-secondary btn-sm dropdown-toggle"
+                                            data-bs-toggle="dropdown">
+                                        <i class="fas fa-sync-alt me-1"></i>Estado
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <form asp-action="CambiarEstado" asp-route-id="@habitacion.HabitacionId"
+                                                  method="post" class="d-inline">
+                                                <input type="hidden" name="estado" value="Disponible" />
+                                                <button type="submit" class="dropdown-item text-success">
+                                                    <i class="fas fa-check-circle me-2"></i>Disponible
+                                                </button>
+                                            </form>
+                                        </li>
+                                        <li>
+                                            <form asp-action="CambiarEstado" asp-route-id="@habitacion.HabitacionId"
+                                                  method="post" class="d-inline">
+                                                <input type="hidden" name="estado" value="Mantenimiento" />
+                                                <button type="submit" class="dropdown-item text-warning">
+                                                    <i class="fas fa-tools me-2"></i>Mantenimiento
+                                                </button>
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <!-- Delete Button -->
+                                <form asp-action="Eliminar" asp-route-id="@habitacion.HabitacionId"
+                                      method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm"
+                                            onclick="return confirm('¿Está seguro que desea eliminar la habitación @habitacion.NumeroHabitacion?')">
+                                        <i class="fas fa-trash me-1"></i>Eliminar
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>

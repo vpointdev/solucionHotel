@@ -1,0 +1,108 @@
+﻿@model HotelFE.Models.BitacoraModel
+@{
+    ViewData["Title"] = "Editar Registro de Bitácora";
+}
+
+<div class="container-fluid mt-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h2">Editar Registro de Bitácora</h1>
+            <p class="text-muted">Registro ID: @Model.ID</p>
+        </div>
+    </div>
+
+    <!-- Form Card -->
+    <div class="card">
+        <div class="card-body">
+            <form asp-action="EditarRegistro" asp-controller="Bitacora" method="post">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <!-- Hidden ID field -->
+                <input type="hidden" asp-for="ID" />
+
+                <div class="row g-4">
+                    <!-- Date and User Section -->
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label asp-for="FechaRegistro" class="form-label fw-bold"></label>
+                            <input asp-for="FechaRegistro" class="form-control" type="datetime-local"
+                                   value="@Model.FechaRegistro.ToString("yyyy-MM-ddTHH:mm")" />
+                            <span asp-validation-for="FechaRegistro" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="UsuarioRegistro" class="form-label fw-bold"></label>
+                            <input asp-for="UsuarioRegistro" maxlength="20" class="form-control"
+                                   value="@Model.UsuarioRegistro" />
+                            <span asp-validation-for="UsuarioRegistro" class="text-danger"></span>
+                            <div class="form-text">Máximo 20 caracteres</div>
+                        </div>
+                    </div>
+
+                    <!-- Action and Module Section -->
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label asp-for="AccesionRealizada" class="form-label fw-bold"></label>
+                            <select asp-for="AccesionRealizada" class="form-select">
+                                <option value="">Seleccione una acción...</option>
+                                <option value="Crear" selected="@(Model.AccesionRealizada == "Crear")">Crear</option>
+                                <option value="Leer" selected="@(Model.AccesionRealizada == "Leer")">Leer</option>
+                                <option value="Actualizar" selected="@(Model.AccesionRealizada == "Actualizar")">Actualizar</option>
+                                <option value="Eliminar" selected="@(Model.AccesionRealizada == "Eliminar")">Eliminar</option>
+                                <option value="Login" selected="@(Model.AccesionRealizada == "Login")">Login</option>
+                                <option value="Logout" selected="@(Model.AccesionRealizada == "Logout")">Logout</option>
+                            </select>
+                            <span asp-validation-for="AccesionRealizada" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="ModuloSistema" class="form-label fw-bold"></label>
+                            <select asp-for="ModuloSistema" class="form-select">
+                                <option value="">Seleccione un módulo...</option>
+                                <option value="Usuarios" selected="@(Model.ModuloSistema == "Usuarios")">Usuarios</option>
+                                <option value="Habitaciones" selected="@(Model.ModuloSistema == "Habitaciones")">Habitaciones</option>
+                                <option value="Reservaciones" selected="@(Model.ModuloSistema == "Reservaciones")">Reservaciones</option>
+                                <option value="Pagos" selected="@(Model.ModuloSistema == "Pagos")">Pagos</option>
+                                <option value="Reportes" selected="@(Model.ModuloSistema == "Reportes")">Reportes</option>
+                                <option value="Sistema" selected="@(Model.ModuloSistema == "Sistema")">Sistema</option>
+                            </select>
+                            <span asp-validation-for="ModuloSistema" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <!-- Description Section -->
+                    <div class="col-12">
+                        <div class="mb-3">
+                            <label asp-for="Descripcion" class="form-label fw-bold"></label>
+                            <textarea asp-for="Descripcion" class="form-control" rows="3">@Model.Descripcion</textarea>
+                            <span asp-validation-for="Descripcion" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions Section -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <hr class="mb-4" />
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a asp-action="Index" asp-controller="Bitacora"
+                               class="btn btn-outline-secondary">
+                                Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-warning px-4">
+                                Guardar Cambios
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

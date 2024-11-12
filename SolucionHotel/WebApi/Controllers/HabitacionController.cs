@@ -1,66 +1,77 @@
-﻿using Entidades.SQLServer;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Negocio.Interfaces;
+using Entidades.SQLServer;
 
 namespace WebApi.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/Habitacion")]
     public class HabitacionController : Controller
     {
-        #region Atributos
-        private readonly IHabitacionLN _iHabitacionLN;
-        #endregion
+        private readonly IHabitacionLN _habitacionLN;
 
-        #region Constructor
-        public HabitacionController(IHabitacionLN iHabitacionLN)
+        public HabitacionController(IHabitacionLN habitacionLN)
         {
-            _iHabitacionLN = iHabitacionLN;
+            _habitacionLN = habitacionLN;
         }
-        #endregion
 
-        public IActionResult Index()
+        [HttpGet]
+        [Route(nameof(ListarHabitaciones))]
+        public List<Habitacion> ListarHabitaciones()
         {
-            return View();
+            return _habitacionLN.ObtenerTodos();
+        }
+
+        [HttpGet]
+        [Route(nameof(ObtenerPorId))]
+        public Habitacion ObtenerPorId([FromHeader] int habitacionId)
+        {
+            return _habitacionLN.ObtenerTodos()
+                .FirstOrDefault(h => h.HabitacionId == habitacionId);
         }
 
         [HttpPost]
-        [Route(nameof(Crear))]
-        public Habitacion Crear([FromBody] Habitacion habitacion)
+        [Route(nameof(AgregarHabitacion))]
+        public bool AgregarHabitacion([FromBody] Habitacion habitacion)
         {
-            return _iHabitacionLN.Crear(habitacion);
-        }
-
-        [HttpGet]
-        [Route(nameof(Obtener))]
-        public List<Habitacion> Obtener(
-            [FromQuery] int? habitacionId = null,
-            [FromQuery] string? numeroHabitacion = null,
-            [FromQuery] int? tipoHabitacionId = null,
-            [FromQuery] string? estado = null)
-        {
-            return _iHabitacionLN.Obtener(habitacionId, numeroHabitacion, tipoHabitacionId, estado);
-        }
-
-        [HttpGet]
-        [Route(nameof(ObtenerTodos))]
-        public List<Habitacion> ObtenerTodos()
-        {
-            return _iHabitacionLN.Obtener();
+            return _habitacionLN.Agregar(habitacion);
         }
 
         [HttpPut]
-        [Route(nameof(Actualizar))]
-        public Habitacion Actualizar([FromBody] Habitacion habitacion)
+        [Route(nameof(ModificarHabitacion))]
+        public bool ModificarHabitacion([FromHeader] int habitacionId, [FromBody] Habitacion habitacion)
         {
-            return _iHabitacionLN.Actualizar(habitacion);
+            habitacion.HabitacionId = habitacionId;
+            return _habitacionLN.Modificar(habitacion);
         }
 
         [HttpDelete]
-        [Route("Eliminar/{habitacionId}")]
-        public bool Eliminar(int habitacionId)
+        [Route(nameof(EliminarHabitacion))]
+        public bool EliminarHabitacion([FromHeader] int habitacionId)
         {
-            return _iHabitacionLN.Eliminar(habitacionId);
+            return _habitacionLN.Eliminar(habitacionId);
+        }
+
+        [HttpPut]
+        [Route(nameof(CambiarEstado))]
+        public bool CambiarEstado([FromHeader] int habitacionId, [FromHeader] string estado)
+        {
+            var habitacion = _habitacionLN.ObtenerTodos()
+                .FirstOrDefault(h => h.HabitacionId == habitacionId);
+
+            if (habitacion != null)
+            {
+                habitacion.Estado = estado;
+                return _habitacionLN.Modificar(habitacion);
+            }
+            return false;
+        }
+
+        [HttpGet]
+        [Route(nameof(ListarTipos))]
+        public List<TipoHabitacion> ListarTipos()
+        {
+            return _habitacionLN.ObtenerTiposHabitacion();
         }
     }
 }
