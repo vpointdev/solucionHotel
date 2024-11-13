@@ -1,25 +1,52 @@
-﻿@model IEnumerable<HotelFE.Models.HabitacionModel>
+﻿@model IEnumerable<HotelFE.Models.ReservacionModel>
 @{
-    ViewData["Title"] = "Habitaciones";
-    var tiposHabitacion = ViewBag.TiposHabitacion as List<TipoHabitacionModel>;
+    ViewData["Title"] = "Reservaciones";
+    var habitaciones = ViewBag.Habitaciones as List<HabitacionModel>;
+    var totalEarnings = Model.Sum(r => r.PrecioTotal);
 }
 
 <div class="container-fluid mt-4">
     <div class="row mb-4">
         <div class="col">
-            <h1 class="h2">Gestión de Habitaciones</h1>
-            <p class="text-muted">Administre las habitaciones del hotel</p>
+            <h1 class="h2">Gestión de Reservaciones</h1>
+            <p class="text-muted">Administre las reservaciones del hotel</p>
+        </div>
+    </div>
+    <div class="row mb-4">
+        <div class="col-md-6 col-xl-4">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0">Total Ingresos</h5>
+                            <p class="mb-0 small">Suma de todas las reservaciones</p>
+                        </div>
+                        <div class="display-6 fw-bold">
+                            $@totalEarnings.ToString("N2")
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <div class="card">
         <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
             <h5 class="mb-0">
-                <i class="fas fa-bed me-2"></i>Lista de Habitaciones
+                <i class="fas fa-calendar-alt me-2"></i>Lista de Reservaciones
             </h5>
-            <a asp-action="Crear" class="btn btn-primary">
-                <i class="fas fa-plus me-2"></i>Nueva Habitación
-            </a>
+            <div class="d-flex gap-2">
+                <form class="d-flex gap-2" method="get" asp-action="Buscar">
+                    <input type="text" class="form-control" name="codigoReservacion" 
+                           placeholder="Buscar por código..." />
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="fas fa-search me-2"></i>Buscar
+                    </button>
+                </form>
+                <a asp-action="Crear" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Nueva Reservación
+                </a>
+            </div>
         </div>
         
         <div class="card-body">
@@ -27,10 +54,10 @@
             {
                 <div class="card bg-light border-0">
                     <div class="card-body text-center py-5">
-                        <i class="fas fa-bed text-muted mb-3" style="font-size: 2.5rem;"></i>
-                        <h5 class="fw-bold">No hay habitaciones registradas</h5>
+                        <i class="fas fa-calendar-alt text-muted mb-3" style="font-size: 2.5rem;"></i>
+                        <h5 class="fw-bold">No hay reservaciones registradas</h5>
                         <p class="text-muted mb-0">
-                            Comience agregando una nueva habitación usando el botón "Nueva Habitación"
+                            Comience agregando una nueva reservación usando el botón "Nueva Reservación"
                         </p>
                     </div>
                 </div>
@@ -38,29 +65,28 @@
             else
             {
                 <div class="row g-4">
-                    @foreach (var habitacion in Model)
+                    @foreach (var reservacion in Model)
                     {
-                        var tipoHabitacion = tiposHabitacion.FirstOrDefault(t => t.TipoHabitacionId == habitacion.TipoHabitacionId);
+                        var habitacion = habitaciones.FirstOrDefault(h => h.HabitacionId == reservacion.HabitacionId);
 
-                        <div class="col-xl-3 col-lg-4 col-md-6">
+                        <div class="col-xl-4 col-lg-6">
                             <div class="card h-100 border">
                                 <div class="card-header border-bottom bg-transparent py-3">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <h6 class="mb-0 fw-bold">
-                                            <i class="fas fa-door-closed me-2"></i>
-                                            Habitación @habitacion.NumeroHabitacion
+                                            <i class="fas fa-bookmark me-2"></i>
+                                            @reservacion.CodigoReservacion
                                         </h6>
                                         @{
-                                            var estadoClasses = habitacion.Estado switch
+                                            var estadoClasses = reservacion.EstadoReservacion switch
                                             {
-                                                "Disponible" => "bg-success-subtle text-success border border-success-subtle",
-                                                "Ocupada" => "bg-danger-subtle text-danger border border-danger-subtle",
-                                                "Mantenimiento" => "bg-warning-subtle text-warning border border-warning-subtle",
+                                                "Confirmada" => "bg-success-subtle text-success border border-success-subtle",
+                                                "Cancelada" => "bg-danger-subtle text-danger border border-danger-subtle",
                                                 _ => "bg-secondary-subtle text-secondary border border-secondary-subtle"
                                             };
                                         }
                                         <span class="badge @estadoClasses px-2 py-1">
-                                            <i class="fas fa-circle me-1"></i>@habitacion.Estado
+                                            <i class="fas fa-circle me-1"></i>@reservacion.EstadoReservacion
                                         </span>
                                     </div>
                                 </div>
@@ -68,10 +94,10 @@
                                 <div class="card-body">
                                     <div class="mb-3">
                                         <div class="d-flex align-items-center bg-light rounded p-2">
-                                            <i class="fas fa-tag text-primary me-2"></i>
+                                            <i class="fas fa-bed text-primary me-2"></i>
                                             <div>
-                                                <small class="text-muted d-block">Tipo</small>
-                                                <span class="fw-bold">@(tipoHabitacion?.Nombre ?? "No definido")</span>
+                                                <small class="text-muted d-block">Habitación</small>
+                                                <span class="fw-bold">@(habitacion?.NumeroHabitacion ?? "No definida")</span>
                                             </div>
                                         </div>
                                     </div>
@@ -79,50 +105,68 @@
                                     <div class="row g-2">
                                         <div class="col-6">
                                             <div class="bg-light rounded p-2">
-                                                <small class="text-muted d-block">Piso</small>
-                                                <span class="fw-bold">@habitacion.Piso</span>
+                                                <small class="text-muted d-block">Entrada</small>
+                                                <span class="fw-bold">
+                                                    <i class="fas fa-calendar me-1"></i>
+                                                    @reservacion.FechaEntrada.ToString("dd/MM/yyyy")
+                                                </span>
                                             </div>
                                         </div>
 
                                         <div class="col-6">
                                             <div class="bg-light rounded p-2">
-                                                <small class="text-muted d-block">Capacidad</small>
+                                                <small class="text-muted d-block">Salida</small>
                                                 <span class="fw-bold">
-                                                    <i class="fas fa-user me-1"></i>@(tipoHabitacion?.Capacidad ?? 0)
+                                                    <i class="fas fa-calendar me-1"></i>
+                                                    @reservacion.FechaSalida.ToString("dd/MM/yyyy")
                                                 </span>
                                             </div>
                                         </div>
 
                                         <div class="col-12">
                                             <div class="bg-light rounded p-2">
-                                                <small class="text-muted d-block">Precio Base</small>
+                                                <small class="text-muted d-block">Precio Total</small>
                                                 <span class="fw-bold text-primary">
-                                                    $@(tipoHabitacion?.PrecioBase.ToString("N2") ?? "0.00")
+                                                    $@reservacion.PrecioTotal.ToString("N2")
                                                 </span>
                                             </div>
                                         </div>
                                     </div>
 
-                                    @if (!string.IsNullOrEmpty(habitacion.Observaciones))
+                                    @if (!string.IsNullOrEmpty(reservacion.Observaciones))
                                     {
                                         <div class="mt-3">
                                             <small class="text-muted d-block">Observaciones</small>
-                                            <p class="small mb-0 text-muted">@habitacion.Observaciones</p>
+                                            <p class="small mb-0 text-muted">@reservacion.Observaciones</p>
                                         </div>
                                     }
                                 </div>
 
                                 <div class="card-footer bg-transparent">
                                     <div class="d-flex gap-2">
+                                        @if (reservacion.EstadoReservacion == "Confirmada")
+                                        {
+                                            <form asp-action="Cancelar"
+                                                  asp-route-id="@reservacion.ReservacionId"
+                                                  method="post"
+                                                  class="flex-grow-1">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit"
+                                                        class="btn btn-outline-danger btn-sm w-100">
+                                                    <i class="fas fa-times-circle me-1"></i>Cancelar
+                                                </button>
+                                            </form>
+                                        }
                                         <a asp-action="Modificar"
-                                           asp-route-id="@habitacion.HabitacionId"
+                                           asp-route-id="@reservacion.ReservacionId"
                                            class="btn btn-outline-primary btn-sm flex-grow-1">
                                             <i class="fas fa-edit me-1"></i>Modificar
                                         </a>
                                         <form asp-action="Eliminar"
-                                              asp-route-id="@habitacion.HabitacionId"
+                                              asp-route-id="@reservacion.ReservacionId"
                                               method="post"
                                               class="flex-grow-1">
+                                            @Html.AntiForgeryToken()
                                             <button type="submit"
                                                     class="btn btn-outline-danger btn-sm w-100">
                                                 <i class="fas fa-trash me-1"></i>Eliminar

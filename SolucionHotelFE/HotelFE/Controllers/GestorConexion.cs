@@ -303,6 +303,160 @@ namespace HotelFE.Controllers
 
         #endregion
 
+        #region Reservacion
 
+        public async Task<List<ReservacionModel>> ObtenerTodasReservaciones()
+        {
+            List<ReservacionModel> lstresultados = new List<ReservacionModel>();
+            string rutaApi = @"api/Reservacion/ListarReservaciones";
+
+            ConexionApi.DefaultRequestHeaders.Clear();
+            ConexionApi.DefaultRequestHeaders.Accept.Clear();
+            ConexionApi.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            HttpResponseMessage resultado = await ConexionApi.GetAsync(rutaApi);
+            if (resultado.IsSuccessStatusCode)
+            {
+                string jsonstring = await resultado.Content.ReadAsStringAsync();
+                lstresultados = JsonConvert.DeserializeObject<List<ReservacionModel>>(jsonstring);
+            }
+
+            return lstresultados;
+        }
+
+        public async Task<List<ReservacionModel>> ConsultarReservacion(ReservacionModel P_Entidad)
+        {
+            List<ReservacionModel> lstresultados = new List<ReservacionModel>();
+            string rutaApi = @"api/Reservacion/ConsultarReservacion";
+
+            ConexionApi.DefaultRequestHeaders.Clear();
+            ConexionApi.DefaultRequestHeaders.Accept.Clear();
+            ConexionApi.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            if (P_Entidad.UsuarioId > 0)
+            {
+                ConexionApi.DefaultRequestHeaders.Add("pUsuarioId", P_Entidad.UsuarioId.ToString());
+            }
+            if (!string.IsNullOrEmpty(P_Entidad.CodigoReservacion))
+            {
+                ConexionApi.DefaultRequestHeaders.Add("pCodigoReservacion", P_Entidad.CodigoReservacion);
+            }
+
+            HttpResponseMessage resultado = await ConexionApi.GetAsync(rutaApi);
+            if (resultado.IsSuccessStatusCode)
+            {
+                string jsonstring = await resultado.Content.ReadAsStringAsync();
+                lstresultados = JsonConvert.DeserializeObject<List<ReservacionModel>>(jsonstring);
+            }
+
+            return lstresultados;
+        }
+
+        public async Task<bool> AgregarReservacion(ReservacionModel P_Entidad, int usuarioId)
+        {
+            string rutaApi = @"api/Reservacion/AgregarReservacion";
+
+            ConexionApi.DefaultRequestHeaders.Clear();
+            ConexionApi.DefaultRequestHeaders.Accept.Clear();
+            ConexionApi.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            // Use the provided UsuarioId instead of the one from the ReservacionModel
+            P_Entidad.UsuarioId = usuarioId;
+
+            HttpResponseMessage resultado = await ConexionApi.PostAsJsonAsync(rutaApi, P_Entidad);
+            return resultado.IsSuccessStatusCode;
+        }
+
+        public async Task<bool> ModificarReservacion(ReservacionModel P_Entidad)
+        {
+            string rutaApi = @"api/Reservacion/ModificarReservacion";
+
+            ConexionApi.DefaultRequestHeaders.Clear();
+            ConexionApi.DefaultRequestHeaders.Accept.Clear();
+            ConexionApi.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            HttpResponseMessage resultado = await ConexionApi.PutAsJsonAsync(rutaApi, P_Entidad);
+            return resultado.IsSuccessStatusCode;
+        }
+
+        public async Task<bool> EliminarReservacion(int id)
+        {
+            string rutaApi = @"api/Reservacion/EliminarReservacion";
+
+            ConexionApi.DefaultRequestHeaders.Clear();
+            ConexionApi.DefaultRequestHeaders.Accept.Clear();
+            ConexionApi.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            ConexionApi.DefaultRequestHeaders.Add("pReservacionId", id.ToString());
+
+            HttpResponseMessage resultado = await ConexionApi.DeleteAsync(rutaApi);
+            return resultado.IsSuccessStatusCode;
+        }
+
+        public async Task<bool> CancelarReservacion(int id)
+        {
+            string rutaApi = @"api/Reservacion/CancelarReservacion";
+
+            ConexionApi.DefaultRequestHeaders.Clear();
+            ConexionApi.DefaultRequestHeaders.Accept.Clear();
+            ConexionApi.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            ConexionApi.DefaultRequestHeaders.Add("pReservacionId", id.ToString());
+
+            HttpResponseMessage resultado = await ConexionApi.PostAsync(rutaApi, null);
+            return resultado.IsSuccessStatusCode;
+        }
+
+        public async Task<List<ReservacionModel>> ObtenerReservacionesPorUsuario(int usuarioId)
+        {
+            List<ReservacionModel> lstresultados = new List<ReservacionModel>();
+            string rutaApi = @"api/Reservacion/ObtenerPorUsuario";
+
+            ConexionApi.DefaultRequestHeaders.Clear();
+            ConexionApi.DefaultRequestHeaders.Accept.Clear();
+            ConexionApi.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            ConexionApi.DefaultRequestHeaders.Add("pUsuarioId", usuarioId.ToString());
+
+            HttpResponseMessage resultado = await ConexionApi.GetAsync(rutaApi);
+            if (resultado.IsSuccessStatusCode)
+            {
+                string jsonstring = await resultado.Content.ReadAsStringAsync();
+                lstresultados = JsonConvert.DeserializeObject<List<ReservacionModel>>(jsonstring);
+            }
+
+            return lstresultados;
+        }
+
+        public async Task<List<ReservacionModel>> ObtenerReservacionPorCodigo(string codigo)
+        {
+            List<ReservacionModel> lstresultados = new List<ReservacionModel>();
+            string rutaApi = @"api/Reservacion/ObtenerPorCodigo";
+
+            ConexionApi.DefaultRequestHeaders.Clear();
+            ConexionApi.DefaultRequestHeaders.Accept.Clear();
+            ConexionApi.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            ConexionApi.DefaultRequestHeaders.Add("pCodigoReservacion", codigo);
+
+            HttpResponseMessage resultado = await ConexionApi.GetAsync(rutaApi);
+            if (resultado.IsSuccessStatusCode)
+            {
+                string jsonstring = await resultado.Content.ReadAsStringAsync();
+                lstresultados = JsonConvert.DeserializeObject<List<ReservacionModel>>(jsonstring);
+            }
+
+            return lstresultados;
+        }
+
+        #endregion
     }
 }

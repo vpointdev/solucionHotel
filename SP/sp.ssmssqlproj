@@ -46,23 +46,11 @@
           <AssociatedConnUserName />
           <FullPath>script_creacion.sql</FullPath>
         </FileNode>
-        <FileNode Name="script_pruebas_usuario.sql">
-          <AssociatedConnectionMoniker>8c91a03d-f9b4-46c0-a305-b5dcc79ff907:VPOINTDEV:True</AssociatedConnectionMoniker>
-          <AssociatedConnSrvName>VPOINTDEV</AssociatedConnSrvName>
-          <AssociatedConnUserName />
-          <FullPath>script_pruebas_usuario.sql</FullPath>
-        </FileNode>
         <FileNode Name="script_usuariobd.sql">
           <AssociatedConnectionMoniker>8c91a03d-f9b4-46c0-a305-b5dcc79ff907:VPOINTDEV:True</AssociatedConnectionMoniker>
           <AssociatedConnSrvName>VPOINTDEV</AssociatedConnSrvName>
           <AssociatedConnUserName />
           <FullPath>script_usuariobd.sql</FullPath>
-        </FileNode>
-        <FileNode Name="SQLQuery2.sql">
-          <AssociatedConnectionMoniker>8c91a03d-f9b4-46c0-a305-b5dcc79ff907:VPOINTDEV:True</AssociatedConnectionMoniker>
-          <AssociatedConnSrvName>VPOINTDEV</AssociatedConnSrvName>
-          <AssociatedConnUserName />
-          <FullPath>SQLQuery2.sql</FullPath>
         </FileNode>
       </Items>
     </LogicalFolder>

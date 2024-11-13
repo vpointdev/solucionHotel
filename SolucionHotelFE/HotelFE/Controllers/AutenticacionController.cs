@@ -1,8 +1,8 @@
-﻿using Microsoft.AspNetCore.Authentication;
+﻿using HotelFE.Models;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using HotelFE.Models;
 
 namespace HotelFE.Controllers
 {
@@ -42,7 +42,8 @@ namespace HotelFE.Controllers
                     {
                         var claims = new List<Claim>()
                         {
-                            new Claim(ClaimTypes.Name, usuario.NombreUsuario),
+                            new Claim(ClaimTypes.Name, usuario.UsuarioId.ToString()),
+
                             new Claim("Usuario", usuario.NombreUsuario)
                         };
 

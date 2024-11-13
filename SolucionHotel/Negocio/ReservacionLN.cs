@@ -1,92 +1,41 @@
-﻿using Negocio.Interfaces;
-using AccesoDatos.Interfaces;
+﻿using AccesoDatos.Interfaces;
 using Entidades.SQLServer;
-using System.Transactions;
+using Negocio.Interfaces;
 
 namespace Negocio
 {
     public class ReservacionLN : IReservacionLN
     {
-        #region Atributos
-        private readonly IReservacionAD _iReservacionAD;
-        #endregion
+        private readonly IReservacionAD _reservacionAD;
 
-        #region Propiedades
-        public TransactionOptions TransacionOpciones { get; set; }
-        #endregion
-
-        #region Constructor
-        public ReservacionLN(IReservacionAD iReservacionAD)
+        public ReservacionLN(IReservacionAD reservacionAD)
         {
-            _iReservacionAD = iReservacionAD;
-            TransacionOpciones = new TransactionOptions
-            {
-                Timeout = TransactionManager.DefaultTimeout,
-                IsolationLevel = IsolationLevel.ReadUncommitted
-            };
-        }
-        #endregion
-
-        #region Métodos Públicos
-        public Reservacion Crear(Reservacion entidad)
-        {
-            try
-            {
-                return _iReservacionAD.Crear(entidad);
-            }
-            catch (Exception)
-            {
-                throw;
-            }
+            _reservacionAD = reservacionAD;
         }
 
-        public Reservacion ProcesarPago(int reservacionId, int usuarioId)
+        public List<Reservacion> ObtenerTodos()
         {
-            try
-            {
-                return _iReservacionAD.ProcesarPago(reservacionId, usuarioId);
-            }
-            catch (Exception)
-            {
-                throw;
-            }
+            return _reservacionAD.ObtenerTodos();
         }
 
-        public Reservacion Cancelar(int reservacionId, int usuarioId)
+        public bool Agregar(Reservacion reservacion)
         {
-            try
-            {
-                return _iReservacionAD.Cancelar(reservacionId, usuarioId);
-            }
-            catch (Exception)
-            {
-                throw;
-            }
+            return _reservacionAD.Agregar(reservacion);
         }
 
-        public List<Reservacion> ObtenerPorUsuario(int usuarioId)
+        public bool Modificar(Reservacion reservacion)
         {
-            try
-            {
-                return _iReservacionAD.ObtenerPorUsuario(usuarioId);
-            }
-            catch (Exception)
-            {
-                throw;
-            }
+            return _reservacionAD.Modificar(reservacion);
         }
 
-        public List<Habitacion> ObtenerDisponibles(DateTime fechaEntrada, DateTime fechaSalida)
+        public bool Eliminar(int reservacionId)
         {
-            try
-            {
-                return _iReservacionAD.ObtenerDisponibles(fechaEntrada, fechaSalida);
-            }
-            catch (Exception)
-            {
-                throw;
-            }
+            return _reservacionAD.Eliminar(reservacionId);
         }
-        #endregion
+
+        public bool CancelarReservacion(int reservacionId)
+        {
+            return _reservacionAD.CancelarReservacion(reservacionId);
+        }
     }
 }
