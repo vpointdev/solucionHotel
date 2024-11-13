@@ -1,6 +1,6 @@
-﻿using System.Net.Http.Headers;
-using HotelFE.Models;
+﻿using HotelFE.Models;
 using Newtonsoft.Json;
+using System.Net.Http.Headers;
 
 namespace HotelFE.Controllers
 {
@@ -103,15 +103,28 @@ namespace HotelFE.Controllers
         public async Task<bool> Modificar(UsuarioModel P_Entidad)
         {
             string rutaApi = @"api/Usuario/ModificarUsuario";
-            ConexionApi.DefaultRequestHeaders.Add("pUsuario", P_Entidad.NombreUsuario);
-            HttpResponseMessage resultado = await ConexionApi.PutAsJsonAsync(rutaApi, P_Entidad);
+            ConexionApi.DefaultRequestHeaders.Clear();
+            ConexionApi.DefaultRequestHeaders.Accept.Clear();
+            ConexionApi.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            HttpResponseMessage resultado = await ConexionApi.PutAsJsonAsync(rutaApi, new
+            {
+                UsuarioId = P_Entidad.UsuarioId,
+                NombreUsuario = P_Entidad.NombreUsuario,
+                Clave = P_Entidad.Clave ?? string.Empty,
+                CorreoRegistro = P_Entidad.CorreoRegistro,
+                FechaRegistro = P_Entidad.FechaRegistro,
+                Estado = P_Entidad.Estado
+            });
+
             return resultado.IsSuccessStatusCode;
         }
 
         public async Task<bool> Eliminar(UsuarioModel P_Entidad)
         {
             string rutaApi = @"api/Usuario/EliminarUsuario";
-            ConexionApi.DefaultRequestHeaders.Add("pUsuario", P_Entidad.NombreUsuario);
+            ConexionApi.DefaultRequestHeaders.Add("pUsuario", P_Entidad.UsuarioId.ToString());
             HttpResponseMessage resultado = await ConexionApi.DeleteAsync(rutaApi);
             return resultado.IsSuccessStatusCode;
         }
@@ -119,8 +132,8 @@ namespace HotelFE.Controllers
         public async Task<List<UsuarioModel>> ConsultarUsuario(UsuarioModel P_Entidad)
         {
             List<UsuarioModel> lstresultados = new List<UsuarioModel>();
-            string rutaApi = @"api/Usuario/ConsultarBitacora";
-            ConexionApi.DefaultRequestHeaders.Add("pUsuario", P_Entidad.NombreUsuario.Count() == 0 ? @"''" : P_Entidad.NombreUsuario);
+            string rutaApi = @"api/Usuario/ConsultarUsuario";
+            ConexionApi.DefaultRequestHeaders.Add("pUsuario", P_Entidad.UsuarioId.ToString());
 
             HttpResponseMessage resultado = await ConexionApi.GetAsync(rutaApi);
             if (resultado.IsSuccessStatusCode)
@@ -145,6 +158,20 @@ namespace HotelFE.Controllers
                 lstresultados = JsonConvert.DeserializeObject<List<PerfilModel>>(jsonstring);
             }
 
+            return lstresultados;
+        }
+
+        public async Task<List<UsuarioModel>> ObtenerUsuarios()
+        {
+            List<UsuarioModel> lstresultados = new List<UsuarioModel>();
+            string rutaApi = @"api/Usuario/ObtenerTodos";
+
+            HttpResponseMessage resultado = await ConexionApi.GetAsync(rutaApi);
+            if (resultado.IsSuccessStatusCode)
+            {
+                string jsonstring = await resultado.Content.ReadAsStringAsync();
+                lstresultados = JsonConvert.DeserializeObject<List<UsuarioModel>>(jsonstring);
+            }
             return lstresultados;
         }
 
@@ -186,18 +213,12 @@ namespace HotelFE.Controllers
 
         public async Task<HabitacionModel> ObtenerHabitacion(int id)
         {
-            HabitacionModel habitacion = null;
-            string rutaApi = @"api/Habitacion/ConsultarHabitacion";
+            string rutaApi = @"api/Habitacion/ObtenerPorId";
             ConexionApi.DefaultRequestHeaders.Add("pHabitacionId", id.ToString());
 
             HttpResponseMessage resultado = await ConexionApi.GetAsync(rutaApi);
-            if (resultado.IsSuccessStatusCode)
-            {
-                string jsonstring = await resultado.Content.ReadAsStringAsync();
-                var habitaciones = JsonConvert.DeserializeObject<List<HabitacionModel>>(jsonstring);
-                habitacion = habitaciones?.FirstOrDefault();
-            }
 
+            var habitacion = await resultado.Content.ReadFromJsonAsync<HabitacionModel>();
             return habitacion;
         }
 
@@ -211,7 +232,6 @@ namespace HotelFE.Controllers
         public async Task<bool> ModificarHabitacion(HabitacionModel P_Entidad)
         {
             string rutaApi = @"api/Habitacion/ModificarHabitacion";
-            ConexionApi.DefaultRequestHeaders.Add("pHabitacionId", P_Entidad.HabitacionId.ToString());
             HttpResponseMessage resultado = await ConexionApi.PutAsJsonAsync(rutaApi, P_Entidad);
             return resultado.IsSuccessStatusCode;
         }
@@ -283,6 +303,6 @@ namespace HotelFE.Controllers
 
         #endregion
 
-        
+
     }
 }

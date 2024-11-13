@@ -6,13 +6,13 @@
 
         public string NombreUsuario { get; set; }
 
-       
-        public string Clave { get; set; }
 
-      
+        public string? Clave { get; set; }
+
+
         public string CorreoRegistro { get; set; }
 
-       
+
         public DateTime FechaRegistro { get; set; }
 
         public bool Estado { get; set; }

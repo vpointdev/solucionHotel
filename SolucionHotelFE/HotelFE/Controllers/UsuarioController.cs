@@ -1,6 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using HotelFE.Models;
 using Microsoft.AspNetCore.Authorization;
-using HotelFE.Models;
+using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
 namespace HotelFE.Controllers
@@ -14,7 +14,7 @@ namespace HotelFE.Controllers
             try
             {
                 var conexion = new GestorConexion();
-                var usuarios = await conexion.ConsultarUsuario(new UsuarioModel { NombreUsuario = string.Empty });
+                var usuarios = await conexion.ObtenerUsuarios();
                 return View(usuarios);
             }
             catch (Exception ex)
@@ -61,25 +61,24 @@ namespace HotelFE.Controllers
             return View(usuario);
         }
 
+
         [Authorize(Roles = "1")]
-        public async Task<IActionResult> Modificar(string nombreUsuario)
+        public async Task<IActionResult> Modificar(int id)
         {
             try
             {
                 var conexion = new GestorConexion();
-                var usuarios = await conexion.ConsultarUsuario(new UsuarioModel { NombreUsuario = nombreUsuario });
+                var usuarios = await conexion.ConsultarUsuario(new UsuarioModel { UsuarioId = id });
                 var usuario = usuarios.FirstOrDefault();
-
                 if (usuario == null)
                 {
                     return NotFound();
                 }
-
                 return View(usuario);
             }
             catch (Exception ex)
             {
-                await RegistrarBitacora("Error Modificar Usuario", $"Error al obtener usuario {nombreUsuario}: {ex.Message}");
+                await RegistrarBitacora("Error Modificar Usuario", $"Error al obtener usuario {id}: {ex.Message}");
                 return RedirectToAction(nameof(Index));
             }
         }
@@ -87,13 +86,12 @@ namespace HotelFE.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "1")]
-        public async Task<IActionResult> Modificar(string nombreUsuario, UsuarioModel usuario)
+        public async Task<IActionResult> Modificar(UsuarioModel usuario)
         {
-            if (nombreUsuario != usuario.NombreUsuario)
+            if (string.IsNullOrEmpty(usuario.Clave))
             {
-                return NotFound();
+                ModelState.Remove("Clave");
             }
-
             if (ModelState.IsValid)
             {
                 try
@@ -122,25 +120,25 @@ namespace HotelFE.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "1")]
-        public async Task<IActionResult> Eliminar(string nombreUsuario)
+        public async Task<IActionResult> Eliminar(int usuarioId)
         {
             try
             {
                 var conexion = new GestorConexion();
-                bool resultado = await conexion.Eliminar(new UsuarioModel { NombreUsuario = nombreUsuario });
+                bool resultado = await conexion.Eliminar(new UsuarioModel { UsuarioId = usuarioId });
 
                 if (resultado)
                 {
-                    await RegistrarBitacora("Eliminar Usuario", $"Usuario eliminado exitosamente: {nombreUsuario}");
+                    await RegistrarBitacora("Eliminar Usuario", $"Usuario eliminado exitosamente: {usuarioId}");
                     return RedirectToAction(nameof(Index));
                 }
 
-                await RegistrarBitacora("Error Eliminar Usuario", $"No se pudo eliminar el usuario: {nombreUsuario}");
+                await RegistrarBitacora("Error Eliminar Usuario", $"No se pudo eliminar el usuario: {usuarioId}");
                 TempData["Error"] = "No se pudo eliminar el usuario.";
             }
             catch (Exception ex)
             {
-                await RegistrarBitacora("Error Eliminar Usuario", $"Error al eliminar usuario {nombreUsuario}: {ex.Message}");
+                await RegistrarBitacora("Error Eliminar Usuario", $"Error al eliminar usuario {usuarioId}: {ex.Message}");
                 TempData["Error"] = "Error al eliminar el usuario.";
             }
 

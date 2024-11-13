@@ -1,6 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Entidades.SQLServer;
+using Microsoft.AspNetCore.Mvc;
 using Negocio.Interfaces;
-using Entidades.SQLServer;
 
 namespace WebApi.Controllers
 {
@@ -24,40 +24,39 @@ namespace WebApi.Controllers
 
         [HttpGet]
         [Route(nameof(ObtenerPorId))]
-        public Habitacion ObtenerPorId([FromHeader] int habitacionId)
+        public Habitacion ObtenerPorId([FromHeader] int pHabitacionId)
         {
             return _habitacionLN.ObtenerTodos()
-                .FirstOrDefault(h => h.HabitacionId == habitacionId);
+                .FirstOrDefault(h => h.HabitacionId == pHabitacionId);
         }
 
         [HttpPost]
         [Route(nameof(AgregarHabitacion))]
-        public bool AgregarHabitacion([FromBody] Habitacion habitacion)
+        public bool AgregarHabitacion([FromBody] Habitacion pHabitacionId)
         {
-            return _habitacionLN.Agregar(habitacion);
+            return _habitacionLN.Agregar(pHabitacionId);
         }
 
         [HttpPut]
         [Route(nameof(ModificarHabitacion))]
-        public bool ModificarHabitacion([FromHeader] int habitacionId, [FromBody] Habitacion habitacion)
+        public bool ModificarHabitacion([FromBody] Habitacion phabitacion)
         {
-            habitacion.HabitacionId = habitacionId;
-            return _habitacionLN.Modificar(habitacion);
+            return _habitacionLN.Modificar(phabitacion);
         }
 
         [HttpDelete]
         [Route(nameof(EliminarHabitacion))]
-        public bool EliminarHabitacion([FromHeader] int habitacionId)
+        public bool EliminarHabitacion([FromHeader] int pHabitacionId)
         {
-            return _habitacionLN.Eliminar(habitacionId);
+            return _habitacionLN.Eliminar(pHabitacionId);
         }
 
         [HttpPut]
         [Route(nameof(CambiarEstado))]
-        public bool CambiarEstado([FromHeader] int habitacionId, [FromHeader] string estado)
+        public bool CambiarEstado([FromHeader] int pHabitacionId, [FromHeader] string estado)
         {
             var habitacion = _habitacionLN.ObtenerTodos()
-                .FirstOrDefault(h => h.HabitacionId == habitacionId);
+                .FirstOrDefault(h => h.HabitacionId == pHabitacionId);
 
             if (habitacion != null)
             {

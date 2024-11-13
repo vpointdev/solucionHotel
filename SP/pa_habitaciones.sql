@@ -1,7 +1,6 @@
 USE Hotel
 GO
 
--- PA_Habitacion_Crear
 CREATE OR ALTER PROCEDURE PA_Habitacion_Crear
     @NumeroHabitacion VARCHAR(10),
     @TipoHabitacionId INT,
@@ -12,7 +11,6 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    -- Verify if room number already exists
     IF EXISTS (SELECT 1 FROM Habitacion WHERE NumeroHabitacion = @NumeroHabitacion AND Activo = 1)
     BEGIN
         RETURN 0;
@@ -39,7 +37,6 @@ BEGIN
 END;
 GO
 
--- PA_Habitacion_Actualizar
 CREATE OR ALTER PROCEDURE PA_Habitacion_Actualizar
     @HabitacionId INT,
     @NumeroHabitacion VARCHAR(10),
@@ -51,24 +48,6 @@ CREATE OR ALTER PROCEDURE PA_Habitacion_Actualizar
 AS
 BEGIN
     SET NOCOUNT ON;
-
-    -- Verify if room exists
-    IF NOT EXISTS (SELECT 1 FROM Habitacion WHERE HabitacionId = @HabitacionId)
-    BEGIN
-        RETURN 0;
-    END
-
-    -- Verify if new room number conflicts with existing one
-    IF EXISTS (
-        SELECT 1 
-        FROM Habitacion 
-        WHERE NumeroHabitacion = @NumeroHabitacion 
-        AND HabitacionId != @HabitacionId 
-        AND Activo = 1
-    )
-    BEGIN
-        RETURN 0;
-    END
 
     UPDATE Habitacion
     SET NumeroHabitacion = @NumeroHabitacion,
@@ -82,23 +61,22 @@ BEGIN
     RETURN 1;
 END;
 GO
+USE Hotel
+GO
 
--- PA_Habitacion_Eliminar
 CREATE OR ALTER PROCEDURE PA_Habitacion_Eliminar
     @HabitacionId INT
 AS
 BEGIN
     SET NOCOUNT ON;
-
-    UPDATE Habitacion
-    SET Activo = 0
-    WHERE HabitacionId = @HabitacionId;
-
-    RETURN 1;
-END;
+        UPDATE Habitacion
+        SET Activo = 0
+        WHERE HabitacionId = @HabitacionId;
+        
+        RETURN 0;
+END
 GO
 
--- PA_Habitacion_ObtenerPorId
 CREATE OR ALTER PROCEDURE PA_Habitacion_ObtenerPorId
     @HabitacionId INT = NULL,
     @NumeroHabitacion VARCHAR(10) = NULL
@@ -114,7 +92,6 @@ BEGIN
         h.Estado,
         h.Observaciones,
         h.Activo,
-        -- TipoHabitacion properties
         t.Nombre as TipoHabitacionNombre,
         t.PrecioBase,
         t.Capacidad
@@ -127,7 +104,6 @@ BEGIN
 END;
 GO
 
--- PA_Habitacion_ObtenerDisponibles
 CREATE OR ALTER PROCEDURE PA_Habitacion_ObtenerDisponibles
 AS
 BEGIN
@@ -141,7 +117,6 @@ BEGIN
         h.Estado,
         h.Observaciones,
         h.Activo,
-        -- TipoHabitacion properties
         t.Nombre as TipoHabitacionNombre,
         t.PrecioBase,
         t.Capacidad
@@ -153,7 +128,6 @@ BEGIN
 END;
 GO
 
--- PA_TipoHabitacion_ObtenerTodos
 CREATE OR ALTER PROCEDURE PA_TipoHabitacion_ObtenerTodos
 AS
 BEGIN
@@ -171,3 +145,27 @@ BEGIN
     ORDER BY PrecioBase;
 END;
 GO
+
+CREATE OR ALTER PROCEDURE PA_Habitacion_ObtenerTodos
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT 
+        h.HabitacionId,
+        h.NumeroHabitacion,
+        h.TipoHabitacionId,
+        h.Piso,
+        h.Estado,
+        h.Observaciones,
+        h.Activo,
+        -- TipoHabitacion properties
+        t.Nombre as TipoHabitacionNombre,
+        t.PrecioBase,
+        t.Capacidad
+    FROM Habitacion h
+    INNER JOIN TipoHabitacion t ON h.TipoHabitacionId = t.TipoHabitacionId
+    WHERE h.Activo = 1
+    ORDER BY h.NumeroHabitacion;
+END;
+GO
+

@@ -28,32 +28,25 @@ namespace WebApi.Controllers
 
         [HttpDelete]
         [Route(nameof(EliminarUsuario))]
-        public bool EliminarUsuario([FromHeader] string pUsuario)
+        public bool EliminarUsuario([FromHeader] int pUsuario)
         {
-            return _iUsuarioLN.Eliminar(new Usuario { NombreUsuario = pUsuario });
+            return _iUsuarioLN.Eliminar(new Usuario { UsuarioId = pUsuario });
         }
 
         [HttpPut]
         [Route(nameof(ModificarUsuario))]
-        public bool ModificarUsuario([FromHeader] string pUsuario, [FromBody] Usuario P_Entidad)
+        public bool ModificarUsuario([FromBody] Usuario P_Entidad)
         {
-            return _iUsuarioLN.Modificar(new Usuario
-            {
-                NombreUsuario = pUsuario,
-                Clave = P_Entidad.Clave,
-                FechaRegistro = P_Entidad.FechaRegistro,
-                Estado = P_Entidad.Estado,
-                CorreoRegistro = P_Entidad.CorreoRegistro
-            });
+            return _iUsuarioLN.Modificar(P_Entidad);
         }
 
         [HttpGet]
         [Route(nameof(ConsultarUsuario))]
-        public List<Usuario> ConsultarUsuario([FromHeader] string pUsuario)
+        public List<Usuario> ConsultarUsuario([FromHeader] int pUsuario)
         {
             return _iUsuarioLN.Consultar(new Usuario
             {
-                NombreUsuario = string.IsNullOrEmpty(pUsuario.Replace("''", string.Empty)) ? string.Empty : pUsuario
+                UsuarioId = pUsuario
             });
         }
 
@@ -66,6 +59,15 @@ namespace WebApi.Controllers
                 NombreUsuario = pUsuario
             });
         }
+
+
+        [HttpGet]
+        [Route(nameof(ObtenerTodos))]
+        public List<Usuario> ObtenerTodos()
+        {
+            return _iUsuarioLN.ObtenerTodos();
+        }
+
 
         [HttpGet]
         [Route(nameof(Autenticacion))]

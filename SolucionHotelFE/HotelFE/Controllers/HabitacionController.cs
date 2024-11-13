@@ -1,6 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using HotelFE.Models;
 using Microsoft.AspNetCore.Authorization;
-using HotelFE.Models;
+using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
 namespace HotelFE.Controllers
@@ -60,7 +60,7 @@ namespace HotelFE.Controllers
                 var conexion = new GestorConexion();
 
                 ViewBag.TiposHabitacion = await conexion.ObtenerTiposHabitacion();
-                                
+
                 if (ModelState.IsValid)
                 {
                     bool resultado = await conexion.AgregarHabitacion(habitacion);
@@ -92,11 +92,8 @@ namespace HotelFE.Controllers
             {
                 var conexion = new GestorConexion();
                 var habitacion = await conexion.ObtenerHabitacion(id);
+                ViewBag.TiposHabitacion = await conexion.ObtenerTiposHabitacion();
 
-                if (habitacion == null)
-                {
-                    return RedirectToAction(nameof(Index));
-                }
 
                 return View(habitacion);
             }
@@ -117,19 +114,27 @@ namespace HotelFE.Controllers
                 try
                 {
                     var conexion = new GestorConexion();
-                    habitacion.HabitacionId = id; 
-                    bool resultado = await conexion.ModificarHabitacion(habitacion);
+                    ViewBag.TiposHabitacion = await conexion.ObtenerTiposHabitacion();
 
-                    if (resultado)
+                    if (ModelState.IsValid)
                     {
-                        await RegistrarBitacora("Modificar Habitación", $"Habitación {habitacion.NumeroHabitacion} modificada exitosamente");
-                        return RedirectToAction(nameof(Index));
+                        habitacion.HabitacionId = id;
+                        bool resultado = await conexion.ModificarHabitacion(habitacion);
+
+                        if (resultado)
+                        {
+                            await RegistrarBitacora("Modificar Habitación",
+                                $"Habitación {habitacion.NumeroHabitacion} modificada exitosamente");
+                            TempData["Success"] = "La habitación ha sido modificada exitosamente.";
+                            return RedirectToAction(nameof(Index));
+                        }
+                        else
+                        {
+                            ModelState.AddModelError("", "No se pudo modificar la habitación. Verifique que el número de habitación no esté duplicado.");
+                        }
                     }
-                    else
-                    {
-                        await RegistrarBitacora("Error Modificar Habitación", $"No se pudo modificar la habitación {habitacion.NumeroHabitacion}");
-                        ModelState.AddModelError("", "No se pudo actualizar la habitación.");
-                    }
+
+                    return View(habitacion);
                 }
                 catch (Exception ex)
                 {
@@ -191,5 +196,40 @@ namespace HotelFE.Controllers
                 Descripcion = descripcion
             });
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "1")]
+        public async Task<IActionResult> Eliminar(int id)
+        {
+            try
+            {
+                var conexion = new GestorConexion();
+                bool resultado = await conexion.EliminarHabitacion(new HabitacionModel { HabitacionId = id });
+
+                if (resultado)
+                {
+                    await RegistrarBitacora("Eliminar Habitación",
+                        $"Habitación {id} eliminada exitosamente");
+                    TempData["Success"] = $"La habitación {id} ha sido eliminada.";
+                }
+                else
+                {
+                    await RegistrarBitacora("Error Eliminar Habitación",
+                        $"No se pudo eliminar la habitación {id}");
+                    TempData["Error"] = "No se pudo eliminar la habitación. Puede que tenga reservaciones activas.";
+                }
+
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                await RegistrarBitacora("Error Eliminar Habitación",
+                    $"Error al eliminar habitación {id}: {ex.Message}");
+                TempData["Error"] = "Ocurrió un error al eliminar la habitación.";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
     }
 }

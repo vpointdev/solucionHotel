@@ -47,12 +47,15 @@ namespace AccesoDatos
 
         public bool Eliminar(int habitacionId)
         {
-            var parametros = new DynamicParameters();
-            parametros.Add("@HabitacionId", habitacionId, DbType.Int32);
+            DynamicParameters parametros = new DynamicParameters();
+            parametros.Add("@HabitacionId", habitacionId, DbType.Int32, ParameterDirection.Input);
 
-            using var conexion = new SqlConnection(_configuration.GetConnectionString("ConexionSQLServer"));
-            return conexion.Execute("PA_Habitacion_Eliminar", parametros,
-                commandType: CommandType.StoredProcedure) > 0;
+            using (var conexionSQL = new SqlConnection(_configuration.GetConnectionString("ConexionSQLServer")))
+            {
+                var result = conexionSQL.Execute("PA_Habitacion_Eliminar", parametros,
+                    commandType: CommandType.StoredProcedure);
+                return result >= 0; // Return true if execution was successful
+            }
         }
 
         public List<Habitacion> ObtenerTodos()

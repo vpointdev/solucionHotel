@@ -4,63 +4,121 @@
 }
 
 <div class="container-fluid mt-4">
-    <!-- Header Section -->
     <div class="row mb-4">
         <div class="col">
-            <h1 class="h2">Lista de Bitácora</h1>
-        </div>
-        <div class="col text-end">
-            <a asp-action="NuevoRegistro" asp-controller="Bitacora" class="btn btn-primary">
-                Nuevo Registro
-            </a>
+            <h1 class="h2">Bitácora del Sistema</h1>
+            <p class="text-muted">Registro de actividades y cambios en el sistema</p>
         </div>
     </div>
 
-    <!-- Table Section -->
     <div class="card">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+            <h5 class="mb-0">
+                <i class="fas fa-history me-2"></i>Registros de Actividad
+            </h5>
+            <a asp-action="NuevoRegistro" asp-controller="Bitacora" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Nuevo Registro
+            </a>
+        </div>
+
         <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover table-striped">
-                    <thead class="table-light">
-                        <tr>
-                            <th>@Html.DisplayNameFor(model => model.FechaRegistro)</th>
-                            <th>@Html.DisplayNameFor(model => model.UsuarioRegistro)</th>
-                            <th>@Html.DisplayNameFor(model => model.AccesionRealizada)</th>
-                            <th>@Html.DisplayNameFor(model => model.ModuloSistema)</th>
-                            <th>@Html.DisplayNameFor(model => model.Descripcion)</th>
-                            <th class="text-center">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var item in Model)
-                        {
+            @if (TempData["Mensaje"] != null)
+            {
+                <div class="alert alert-info d-flex align-items-center mb-4" role="alert">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <div>@TempData["Mensaje"]</div>
+                </div>
+            }
+
+            @if (Model != null && Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
                             <tr>
-                                <td>@item.FechaRegistro.ToString("dd/MM/yyyy HH:mm")</td>
-                                <td>
-                                    <span class="badge bg-secondary">@item.UsuarioRegistro</span>
-                                </td>
-                                <td>@item.AccesionRealizada</td>
-                                <td>@item.ModuloSistema</td>
-                                <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis;">
-                                    @item.Descripcion
-                                </td>
-                                <td class="text-center">
-                                    <a asp-action="VerDatosParaEdicion"
-                                       asp-route-pId="@item.ID"
-                                       class="btn btn-warning btn-sm me-2">
-                                        Editar
-                                    </a>
-                                    <a asp-action="BorrarRegistro"
-                                       asp-route-pId="@item.ID"
-                                       class="btn btn-danger btn-sm">
-                                        Borrar
-                                    </a>
-                                </td>
+                                <th scope="col" style="width: 160px;">
+                                    <i class="fas fa-calendar-alt me-1"></i>
+                                    @Html.DisplayNameFor(model => model.FechaRegistro)
+                                </th>
+                                <th scope="col" style="width: 140px;">
+                                    <i class="fas fa-user me-1"></i>
+                                    @Html.DisplayNameFor(model => model.UsuarioRegistro)
+                                </th>
+                                <th scope="col">
+                                    <i class="fas fa-tasks me-1"></i>
+                                    @Html.DisplayNameFor(model => model.AccesionRealizada)
+                                </th>
+                                <th scope="col">
+                                    <i class="fas fa-cube me-1"></i>
+                                    @Html.DisplayNameFor(model => model.ModuloSistema)
+                                </th>
+                                <th scope="col">
+                                    <i class="fas fa-align-left me-1"></i>
+                                    @Html.DisplayNameFor(model => model.Descripcion)
+                                </th>
+                                <th scope="col" class="text-end" style="width: 160px;">Acciones</th>
                             </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td class="text-nowrap">
+                                        <span class="text-muted">
+                                            @item.FechaRegistro.ToString("dd/MM/yyyy")
+                                        </span>
+                                        <br />
+                                        <small>@item.FechaRegistro.ToString("HH:mm")</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1">
+                                            <i class="fas fa-user-circle me-1"></i>@item.UsuarioRegistro
+                                        </span>
+                                    </td>
+                                    <td class="fw-medium">@item.AccesionRealizada</td>
+                                    <td>
+                                        <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-1">
+                                            @item.ModuloSistema
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="text-wrap" style="max-width: 400px;">
+                                            @item.Descripcion
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex justify-content-end gap-2">
+                                            <a asp-action="VerDatosParaEdicion"
+                                               asp-route-pId="@item.ID"
+                                               class="btn btn-outline-primary btn-sm">
+                                                <i class="fas fa-edit me-1"></i>Editar
+                                            </a>
+                                            <a asp-action="BorrarRegistro"
+                                               asp-route-pId="@item.ID"
+                                               class="btn btn-outline-danger btn-sm"
+                                               onclick="return confirm('¿Está seguro de eliminar este registro?')">
+                                                <i class="fas fa-trash me-1"></i>Borrar
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="card bg-light border-0">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-history text-muted mb-3" style="font-size: 2.5rem;"></i>
+                        <h5 class="fw-bold">No hay registros en la bitácora</h5>
+                        <p class="text-muted mb-0">
+                            Los registros de actividad aparecerán aquí una vez que se generen
+                        </p>
+                    </div>
+                </div>
+            }
         </div>
     </div>
 </div>
